@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { asc, eq } from "drizzle-orm";
 import { db, auditEvents, users, attestations } from "@/lib/db";
-import { requireRole } from "@/lib/auth";
+import { requireRolePage } from "@/lib/auth";
 import IntegrityPanel from "../integrity";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,7 @@ const ACTION_TONE: Record<string, string> = {
 export default async function AuditPage({ params, searchParams }: {
   params: Promise<{ id: string }>; searchParams: Promise<{ action?: string }>;
 }) {
-  await requireRole("audit:read");
+  await requireRolePage("audit:read");
   const { id } = await params;
   const { action } = await searchParams;
 

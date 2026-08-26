@@ -1,5 +1,5 @@
 import { and, eq, inArray } from "drizzle-orm";
-import { db, exceptions, rules, loanRecords, rawRecords } from "@/lib/db";
+import { db, exceptions, rules, loanRecords } from "@/lib/db";
 import { CANONICAL_FIELDS, FIELD_META } from "@/lib/schema/fields";
 import { describeExpr } from "@/lib/rules/dsl";
 import { callModel, redact, aiEnabled } from "./client";

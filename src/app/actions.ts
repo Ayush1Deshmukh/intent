@@ -5,14 +5,13 @@ import { revalidatePath } from "next/cache";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { eq, and } from "drizzle-orm";
-import { db, fieldMappings, tapes, rules } from "@/lib/db";
-import { getSession, requireRole, signIn, signOut, Session } from "@/lib/auth";
+import { db, fieldMappings } from "@/lib/db";
+import { getSession, requireRole, signIn, signOut } from "@/lib/auth";
 import { HttpProblem } from "@/lib/problem";
 import { ingestFiles, normalizeAndValidate } from "@/lib/service/ingest";
 import { acceptProposal, approveProposal, createProposal, rejectProposal, waiveException } from "@/lib/service/review";
 import { attestTape } from "@/lib/service/attest";
 import { proposeFix, authorRule } from "@/lib/ai/jobs";
-import { emit } from "@/lib/audit";
 
 const err = (e: unknown) => (e instanceof HttpProblem ? e.detail : e instanceof Error ? e.message : "Something went wrong.");
 

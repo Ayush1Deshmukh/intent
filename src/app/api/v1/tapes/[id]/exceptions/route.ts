@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray } from "drizzle-orm";
 import { db, exceptions, rules, loanRecords } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { problemHandler } from "@/lib/problem";

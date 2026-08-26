@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { asc } from "drizzle-orm";
 import { db, rules } from "@/lib/db";
 import { requireRole } from "@/lib/auth";
 import { HttpProblem, problemHandler } from "@/lib/problem";

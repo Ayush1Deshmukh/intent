@@ -11,7 +11,7 @@
  */
 import {
   pgTable, pgEnum, text, integer, timestamp, date, numeric, boolean,
-  jsonb, doublePrecision, serial, uniqueIndex, index, char,
+  jsonb, doublePrecision, uniqueIndex, index, char,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createId } from "@/lib/id";

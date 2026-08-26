@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { desc, eq, sql } from "drizzle-orm";
-import { db, tapes, exceptions, loanRecords, attestations, users } from "@/lib/db";
+import { db, tapes, attestations, users } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/policy";
 import { Chip, Empty } from "@/components/ui";

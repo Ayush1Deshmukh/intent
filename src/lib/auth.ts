@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db, users } from "./db";
@@ -63,3 +64,20 @@ export async function requireSession(): Promise<Session> {
 }
 
 export const hashPassword = (p: string) => bcrypt.hash(p, 10);
+
+/**
+ * The page-level twin of requireRole().
+ *
+ * A route handler should throw — the caller is a machine and wants RFC 7807.
+ * A page has a person in front of it, so an unmet role becomes a redirect to a
+ * page that explains which role they hold and which one the screen needs,
+ * rather than Next's opaque "server-side exception" screen.
+ */
+export async function requireRolePage(action: Action): Promise<Session> {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (!can(session.role, action)) {
+    redirect(`/denied?action=${encodeURIComponent(action)}&role=${encodeURIComponent(session.role)}`);
+  }
+  return session;
+}

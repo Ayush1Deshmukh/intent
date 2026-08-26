@@ -1,4 +1,4 @@
-import { asc, desc, eq, sql } from "drizzle-orm";
+import { asc, desc, sql } from "drizzle-orm";
 import { db, rules, exceptions, tapes } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/policy";

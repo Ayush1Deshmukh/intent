@@ -6,9 +6,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { and, eq, inArray, sql } from "drizzle-orm";
-import { db, tapes, exceptions, rules, loanRecords, users, auditEvents, verifiedRecords, proposals } from "@/lib/db";
+import { db, exceptions, rules, loanRecords, users, auditEvents, verifiedRecords } from "@/lib/db";
 import { ingestFiles, normalizeAndValidate } from "@/lib/service/ingest";
-import { acceptProposal, approveProposal, createProposal, tapeCounts, waiveException } from "@/lib/service/review";
+import { acceptProposal, approveProposal, createProposal, tapeCounts } from "@/lib/service/review";
 import { attestTape, verifyTape, loanProof } from "@/lib/service/attest";
 import { proposeFix, clusterExceptions } from "@/lib/ai/jobs";
 import { seedReference } from "./seed";

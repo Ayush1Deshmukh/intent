@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { asc, eq } from "drizzle-orm";
 import { db, loanRecords } from "@/lib/db";
-import { requireRole } from "@/lib/auth";
+import { requireRolePage } from "@/lib/auth";
 import RecordGrid from "./grid";
 
 export const dynamic = "force-dynamic";
 
 export default async function RecordsPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRole("tape:read");
+  await requireRolePage("tape:read");
   const { id } = await params;
   const rows = await db.select().from(loanRecords).where(eq(loanRecords.tapeId, id))
     .orderBy(asc(loanRecords.loanId)).limit(600);

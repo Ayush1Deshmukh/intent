@@ -70,8 +70,8 @@ const STATES = ["CA","TX","FL","NY","IL","PA","OH","GA","NC","MI","NJ","VA","WA"
 const SERVICERS = ["SVC-01","SVC-02","SVC-03","SVC-04","SVC-05","SVC-06"];
 const BAD_SERVICERS = ["SVC-99","LEGACY-2","","SVCX","OLD-SVC"];
 const PRODUCTS = ["Fixed Rate","Fixed","ARM","Adjustable Rate","HELOC","Auto","Personal"];
-const FIRST = ["James","Maria","Wei","Aisha","Daniel","Priya","Luis","Emma","Kofi","Sofia","Noah","Yuki","Omar","Hannah","Diego","Fatima","Liam","Ingrid","Tomas","Chen"];
-const LAST  = ["Okafor","Nguyen","Silva","Patel","Kowalski","Rossi","Andersen","Haddad","Murphy","Tanaka","Costa","Bergman","Ali","Novak","Reyes","Dubois","Larsen","Iqbal","Moreau","Weber"];
+const _FIRST = ["James","Maria","Wei","Aisha","Daniel","Priya","Luis","Emma","Kofi","Sofia","Noah","Yuki","Omar","Hannah","Diego","Fatima","Liam","Ingrid","Tomas","Chen"];
+const _LAST  = ["Okafor","Nguyen","Silva","Patel","Kowalski","Rossi","Andersen","Haddad","Murphy","Tanaka","Costa","Bergman","Ali","Novak","Reyes","Dubois","Larsen","Iqbal","Moreau","Weber"];
 
 const pad = (n: number, w = 6) => String(n).padStart(w, "0");
 const money = (n: number) => n.toFixed(2);
@@ -111,7 +111,7 @@ for (let i = 0; i < N; i++) {
   const origBal = Math.round(between(45_000, 850_000) / 500) * 500;
   const ratePct = Math.round(between(3.75, 8.25) * 1000) / 1000;
   const paidPct = between(0.05, 0.55);
-  let currBal = Math.round(origBal * (1 - paidPct) * 100) / 100;
+  const currBal = Math.round(origBal * (1 - paidPct) * 100) / 100;
   const payment = Math.round(amort(origBal, ratePct, term) * 100) / 100;
   let status = "Current";
   let dpd = 0;

@@ -11,8 +11,8 @@
  *
  * Then press "Check integrity" in the browser.
  */
-import { and, eq, sql } from "drizzle-orm";
-import { db, loanRecords, verifiedRecords, auditEvents, attestations } from "@/lib/db";
+import { eq, sql } from "drizzle-orm";
+import { db, loanRecords, verifiedRecords } from "@/lib/db";
 
 const args = process.argv.slice(2);
 const flag = (name: string) => {

@@ -17,7 +17,7 @@ type Proposal = { id: string; field: string; fromValue: string | null; toValue: 
 const SEVERITIES = ["BLOCKER", "CRITICAL", "WARNING", "INFO"];
 const STATUSES = ["OPEN", "PENDING_APPROVAL", "RESOLVED", "WAIVED", "REJECTED"];
 
-export default function Queue({ tapeId, rows, clusters, canAct, canWaive }: {
+export default function Queue({ rows, clusters, canAct, canWaive }: {
   tapeId: string; rows: Row[]; clusters: Cluster[]; canAct: boolean; canWaive: boolean;
 }) {
   const router = useRouter();

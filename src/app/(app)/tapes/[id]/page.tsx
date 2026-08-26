@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { db, tapes, exceptions, rules, loanRecords, attestations, sourceFiles, auditEvents } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/policy";

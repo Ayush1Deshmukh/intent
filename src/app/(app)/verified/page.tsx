@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { db, verifiedRecords, tapes, attestations } from "@/lib/db";
-import { requireRole } from "@/lib/auth";
+import { requireRolePage } from "@/lib/auth";
 import { Empty } from "@/components/ui";
 
 export const dynamic = "force-dynamic";
 
 export default async function VerifiedPage() {
-  await requireRole("verified:read");
+  await requireRolePage("verified:read");
   const rows = await db.select({
     v: verifiedRecords, tape: tapes.name, tapeId: tapes.id, root: attestations.merkleRoot,
   })

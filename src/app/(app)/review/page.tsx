@@ -1,14 +1,14 @@
 import { desc, eq, inArray } from "drizzle-orm";
-import Link from "next/link";
+
 import { db, proposals, exceptions, rules, loanRecords, users, tapes } from "@/lib/db";
-import { requireRole } from "@/lib/auth";
+import { requireRolePage } from "@/lib/auth";
 import { Empty } from "@/components/ui";
 import ReviewList from "./list";
 
 export const dynamic = "force-dynamic";
 
 export default async function ReviewPage() {
-  await requireRole("proposal:approve");
+  await requireRolePage("proposal:approve");
 
   const rows = await db.select({
     p: proposals, exc: exceptions, rule: rules,

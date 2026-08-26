@@ -1,6 +1,6 @@
-import { and, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
-  db, exceptions, loanRecords, proposals, decisions, rules, transformations, rawRecords, sourceFiles, tapes,
+  db, exceptions, loanRecords, proposals, decisions, rules, transformations, rawRecords, sourceFiles,
 } from "@/lib/db";
 import { emit } from "@/lib/audit";
 import { recordHash } from "@/lib/hash";

@@ -1,7 +1,8 @@
 import { and, asc, eq } from "drizzle-orm";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { db, fieldMappings, sourceFiles, rawRecords, tapes } from "@/lib/db";
-import { requireRole } from "@/lib/auth";
+import { requireRolePage } from "@/lib/auth";
 import { CANONICAL_FIELDS, CanonicalField, FIELD_META } from "@/lib/schema/fields";
 import { detectColumnHints } from "@/lib/coerce";
 import MappingForm from "./form";
@@ -9,14 +10,17 @@ import MappingForm from "./form";
 export const dynamic = "force-dynamic";
 
 export default async function MappingPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireRole("tape:map");
+  await requireRolePage("tape:map");
   const { id } = await params;
 
   const [tape] = await db.select().from(tapes).where(eq(tapes.id, id)).limit(1);
   const rows = await db.select().from(fieldMappings)
     .where(and(eq(fieldMappings.tapeId, id), eq(fieldMappings.sourceKind, "LOAN_TAPE")));
   const files = await db.select().from(sourceFiles).where(eq(sourceFiles.tapeId, id));
-  const primary = files.find((f) => f.kind === "LOAN_TAPE")!;
+  const primary = files.find((f) => f.kind === "LOAN_TAPE");
+  // A tape id that does not exist, or one whose loan tape never landed, is a 404 —
+  // not a crash. Reaching for `!` here was the one place a bad URL took the page down.
+  if (!tape || !primary) notFound();
 
   const sample = await db.select({ original: rawRecords.original }).from(rawRecords)
     .where(eq(rawRecords.sourceFileId, primary.id)).orderBy(asc(rawRecords.rowNumber)).limit(200);
