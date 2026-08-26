@@ -1,0 +1,50 @@
+{
+  "name": "verified-tape",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "next lint",
+    "test": "vitest run",
+    "db:push": "drizzle-kit push",
+    "db:seed": "tsx --env-file=.env scripts/seed.ts",
+    "gen:tape": "tsx scripts/generate-tape.ts",
+    "tamper": "tsx --env-file=.env scripts/tamper.ts",
+    "db:generate": "drizzle-kit generate",
+    "e2e": "tsx --env-file=.env scripts/e2e.ts",
+    "dry-run": "tsx scripts/dry-run.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
+    "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.1",
+    "decimal.js": "^10.4.3",
+    "drizzle-orm": "^0.45.2",
+    "jose": "^5.9.6",
+    "jszip": "^3.10.1",
+    "next": "^15.1.0",
+    "papaparse": "^5.4.1",
+    "pg": "^8.23.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.10.0",
+    "@types/papaparse": "^5.3.15",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "drizzle-kit": "^0.31.10",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
