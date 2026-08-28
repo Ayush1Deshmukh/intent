@@ -32,7 +32,13 @@ async function main() {
         .where(eq(loanRecords.id, v.loanRecordId));
       n++;
     }
+    // and undo an edited audit event: the flag was added to the payload, so removing
+    // it restores the exact bytes the stored hash was computed over
+    const events = await db.execute(sql`
+      UPDATE audit_events SET payload = payload - 'tampered'
+      WHERE payload ? 'tampered' RETURNING seq`);
     console.log(`restored ${n} records from their sealed payloads`);
+    if (events.rowCount) console.log(`un-edited ${events.rowCount} audit event(s) — the chain should verify again`);
     process.exit(0);
   }
 

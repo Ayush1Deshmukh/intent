@@ -37,6 +37,7 @@ export default async function ExceptionsPage({ params }: { params: Promise<{ id:
         tapeId={id}
         canAct={can(session.role, "proposal:accept")}
         canWaive={can(session.role, "exception:waive")}
+        canExclude={can(session.role, "loan:exclude")}
         clusters={clusters.map((c) => ({ key: c.key, label: c.label, rootCause: c.rootCause,
           count: c.exceptionIds.length, suggestedAction: c.suggestedAction, source: c.source, confidence: c.confidence }))}
         rows={rows.map((r) => ({

@@ -5,13 +5,14 @@
  */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db, exceptions, rules, loanRecords, users, auditEvents, verifiedRecords } from "@/lib/db";
 import { ingestFiles, normalizeAndValidate } from "@/lib/service/ingest";
 import { acceptProposal, approveProposal, createProposal, tapeCounts } from "@/lib/service/review";
 import { attestTape, verifyTape, loanProof } from "@/lib/service/attest";
 import { proposeFix, clusterExceptions } from "@/lib/ai/jobs";
 import { seedReference } from "./seed";
+import { resolveAllExceptions } from "./seed-review";
 import type { Session } from "@/lib/auth";
 
 const ROOT = join(import.meta.dirname ?? process.cwd(), "..");
@@ -98,13 +99,23 @@ async function main() {
   check(afterApprove.recordHash !== beforeHash, "approving DOES change the record and its hash");
   check(afterApprove.version === 2, "the record version was bumped");
 
-  console.log("\n--- 6. clear the remaining gating exceptions the fast way ---");
-  // a demo shortcut, not a product feature: reject the rest so we can reach sign-off
-  await db.update(exceptions).set({ status: "REJECTED" })
-    .where(and(eq(exceptions.tapeId, ing.tapeId), inArray(exceptions.severity, ["BLOCKER", "CRITICAL"]),
-               inArray(exceptions.status, ["OPEN", "PENDING_APPROVAL"])));
+  console.log("\n--- 6. work the rest of the queue, through the real service paths ---");
+  // No shortcut here on purpose. Every remaining exception is resolved the way a
+  // person would: repaired under maker-checker where the arithmetic forces a value,
+  // waived with a reason where it is not gating, and the loan excluded where a
+  // blocker has no defensible repair. If any of those paths breaks, this stalls.
+  const tally = await resolveAllExceptions(opSession, revSession, ing.tapeId);
+  console.log(`  repaired ${tally.repaired}  waived ${tally.waived}  loans excluded ${tally.excluded}`);
+  check(tally.repaired > 0, `${tally.repaired} exceptions repaired under maker-checker`);
+  check(tally.excluded > 0, `${tally.excluded} loans excluded rather than guessed at`);
+
   const after = await tapeCounts(ing.tapeId);
   check(after.openGating === 0, "no gating exceptions remain open");
+
+  const droppedRows = await db.select({ id: loanRecords.id }).from(loanRecords)
+    .where(and(eq(loanRecords.tapeId, ing.tapeId), eq(loanRecords.verificationStatus, "REJECTED")));
+  check(droppedRows.length === tally.excluded,
+    `every excluded loan is marked REJECTED and will not be sealed (${droppedRows.length})`);
 
   console.log("\n--- 7. attest ---");
   const att = await attestTape(revSession, ing.tapeId);

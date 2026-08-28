@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import {
   db, exceptions, loanRecords, proposals, decisions, rules, transformations, rawRecords, sourceFiles,
 } from "@/lib/db";
@@ -231,4 +231,58 @@ export async function tapeCounts(tapeId: string) {
   }
   const total = Object.values(bySeverity).reduce((a, b) => a + b, 0);
   return { bySeverity, byStatus, total, openGating };
+}
+
+/**
+ * Drop one loan from the tape.
+ *
+ * This closes the only dead end in the workflow. A blocking exception cannot be
+ * waived — that is the point of a blocking exception — but some of them have no
+ * defensible repair either: a loan that arrived with no identifier at all, or a
+ * maturity date before its origination where neither source can say which is
+ * wrong. Without this action the only way out is an UPDATE against the database,
+ * which is precisely what the rest of this system exists to make impossible.
+ *
+ * So the reviewer excludes the loan instead of inventing a value for it. It is
+ * marked REJECTED, its open exceptions are closed as REJECTED, it never enters
+ * the verified ledger, and the attestation states how many loans were dropped and
+ * why. That is what actually happens in loan review: bad loans get kicked, not
+ * fixed. Excluding is reviewer-only and always needs a written reason.
+ */
+export async function excludeLoan(session: Session, recordId: string, reason: string) {
+  if (!reason || reason.trim().length < 4) {
+    throw new HttpProblem(400, "reason-required",
+      "Dropping a loan from the tape requires a written reason — it goes into the attestation.");
+  }
+  const [rec] = await db.select().from(loanRecords).where(eq(loanRecords.id, recordId)).limit(1);
+  if (!rec) throw new HttpProblem(404, "record-not-found", "That loan record does not exist.");
+  if (rec.verificationStatus === "VERIFIED") {
+    throw new HttpProblem(409, "already-verified",
+      "This loan has already been sealed into the verified ledger. Sign the tape off again to change it.");
+  }
+  if (rec.verificationStatus === "REJECTED") {
+    throw new HttpProblem(409, "already-excluded", "This loan is already excluded from the tape.");
+  }
+
+  const open = await db.select({ id: exceptions.id, code: rules.code, severity: exceptions.severity })
+    .from(exceptions).innerJoin(rules, eq(rules.id, exceptions.ruleId))
+    .where(and(eq(exceptions.recordId, recordId),
+               inArray(exceptions.status, ["OPEN", "PENDING_APPROVAL"])));
+
+  return db.transaction(async (tx) => {
+    await emit(tx, {
+      tapeId: rec.tapeId, actorId: session.userId, actorRole: session.role,
+      action: "LOAN_EXCLUDED", entityType: "loanRecord", entityId: recordId,
+      payload: {
+        loanId: rec.loanId, reason,
+        closedExceptions: open.map((o) => ({ code: o.code, severity: o.severity })),
+      },
+    });
+    await tx.update(exceptions).set({ status: "REJECTED" })
+      .where(and(eq(exceptions.recordId, recordId),
+                 inArray(exceptions.status, ["OPEN", "PENDING_APPROVAL"])));
+    await tx.update(loanRecords).set({ verificationStatus: "REJECTED" })
+      .where(eq(loanRecords.id, recordId));
+    return { recordId, loanId: rec.loanId, closed: open.length };
+  });
 }

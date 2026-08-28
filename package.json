@@ -18,7 +18,8 @@
     "ui:smoke": "node scripts/ui/smoke.mjs",
     "ui:flow": "node scripts/ui/flow.mjs",
     "ui:demo": "node scripts/ui/demo.mjs",
-    "ai:check": "tsx --env-file=.env scripts/ai-check.ts"
+    "ai:check": "tsx --env-file=.env scripts/ai-check.ts",
+    "demo:reviewed": "tsx --env-file=.env scripts/seed-review.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",

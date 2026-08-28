@@ -18,8 +18,8 @@ type Proposal = { id: string; field: string; fromValue: string | null; toValue: 
 const SEVERITIES = ["BLOCKER", "CRITICAL", "WARNING", "INFO"];
 const STATUSES = ["OPEN", "PENDING_APPROVAL", "RESOLVED", "WAIVED", "REJECTED"];
 
-export default function Queue({ rows, clusters, canAct, canWaive }: {
-  tapeId: string; rows: Row[]; clusters: Cluster[]; canAct: boolean; canWaive: boolean;
+export default function Queue({ rows, clusters, canAct, canWaive, canExclude }: {
+  tapeId: string; rows: Row[]; clusters: Cluster[]; canAct: boolean; canWaive: boolean; canExclude: boolean;
 }) {
   const router = useRouter();
   const [sev, setSev] = useState<string[]>([]);
@@ -131,15 +131,15 @@ export default function Queue({ rows, clusters, canAct, canWaive }: {
       </div>
 
       {open ? (
-        <Drawer row={open} canAct={canAct} canWaive={canWaive}
+        <Drawer row={open} canAct={canAct} canWaive={canWaive} canExclude={canExclude}
           onClose={() => { setOpen(null); router.refresh(); }} />
       ) : null}
     </div>
   );
 }
 
-function Drawer({ row, canAct, canWaive, onClose }: {
-  row: Row; canAct: boolean; canWaive: boolean; onClose: () => void;
+function Drawer({ row, canAct, canWaive, canExclude, onClose }: {
+  row: Row; canAct: boolean; canWaive: boolean; canExclude: boolean; onClose: () => void;
 }) {
   const [explain, setExplain] = useState<Explain | null>(null);
   const [proposal, setProposal] = useState<Proposal | null>(null);
@@ -259,6 +259,24 @@ function Drawer({ row, canAct, canWaive, onClose }: {
                   }}>Reject (needs a reason)</button>
               </div>
             ) : null}
+          </div>
+        ) : null}
+
+        {canExclude && row.loanId !== undefined && (row.severity === "BLOCKER" || row.severity === "CRITICAL")
+          && (row.status === "OPEN" || row.status === "PENDING_APPROVAL") ? (
+          <div className="card p-4 flex flex-col gap-2 border-l-2 border-crit">
+            <span className="eyebrow">Drop this loan from the tape</span>
+            <p className="text-xs text-muted">
+              A blocking exception cannot be waived. When there is no defensible repair — no
+              identifier at all, or two sources that cannot say which of them is wrong — the loan
+              is excluded rather than guessed at. It never enters the verified ledger, and the
+              count and the reason go into the attestation.
+            </p>
+            <button className="btn btn-sm btn-danger self-start" disabled={busy !== null || reason.trim().length < 4}
+              onClick={async () => {
+                const r = await call("exclude", `/api/v1/exceptions/${row.id}/exclude`, { reason });
+                if (r) setMsg({ tone: "ok", text: `Excluded${r.loanId ? ` ${r.loanId}` : ""} from the tape, closing ${r.closed} open exception${r.closed === 1 ? "" : "s"} on it.` });
+              }}>Exclude this loan (needs a reason)</button>
           </div>
         ) : null}
 

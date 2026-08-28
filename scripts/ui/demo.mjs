@@ -42,6 +42,8 @@ const sql = (q) =>
   execFileSync("docker", ["exec", "verified-tape-db", "psql", "-U", "postgres", "-d", "verified_tape", "-tAc", q],
     { encoding: "utf8" }).trim();
 
+const run = (cmd, args) => execFileSync(cmd, args, { encoding: "utf8", stdio: "pipe" });
+
 /* ============================================================ 1  OPERATOR */
 step("1  operator: load the tape and confirm the mapping");
 const op = await login("operator@intain.demo");
@@ -184,10 +186,40 @@ const at = await rev.locator("body").innerText();
   : bad("sign-off is not visibly blocked:\n" + at.slice(0, 500));
 
 /* =================================== 7  CLEAR GATING, THEN SIGN OFF */
-step("7  clear the gating exceptions, then sign off for real");
-// the demo does this one at a time; the rehearsal does it in SQL so the rest can be tested
-sql(`update exceptions set status='WAIVED' where tape_id='${tapeId}' and status='OPEN' and severity in ('BLOCKER','CRITICAL')`);
-note("gating exceptions cleared out of band (the demo clears them by hand)");
+step("7  reviewer: drop a loan that cannot be repaired, then clear the rest and sign off");
+
+// First, prove the escape hatch works through the UI. A blocker cannot be waived;
+// when there is no defensible repair the reviewer excludes the loan instead.
+await rev.goto(`${BASE}/tapes/${tapeId}/exceptions`, { waitUntil: "networkidle" });
+await rev.waitForTimeout(2000);
+await rev.locator('select').first().selectOption("XFD-002").catch(() => {});   // maturity before origination
+await rev.waitForTimeout(900);
+const target = rev.locator('table.grid tbody tr').filter({ hasText: /LN-\d+/ }).first();
+const victimLoan = (await target.innerText()).match(/LN-\d+/)?.[0];
+await target.locator('button:has-text("Open")').click();
+await rev.waitForTimeout(900);
+
+const revDrawer = rev.locator("aside");
+const excludeBtn = revDrawer.locator('button:has-text("Exclude this loan")');
+(await excludeBtn.count()) ? ok("the reviewer is offered the exclude action on a blocker") : bad("no exclude action on a blocking exception");
+(await excludeBtn.isDisabled()) ? ok("exclude is disabled until a reason is written") : bad("exclude accepted with no reason");
+await revDrawer.locator("textarea").fill("Neither source can say which date is wrong. Dropped rather than guessed at.");
+await rev.waitForTimeout(300);
+await shot(rev, "11a-exclude");
+await excludeBtn.click();
+await rev.waitForTimeout(4000);
+const exText = await revDrawer.innerText();
+/Excluded/i.test(exText) ? ok(`the loan was dropped from the tape: ${victimLoan}`) : bad("exclude gave no confirmation:\n" + exText.slice(-400));
+
+const status = victimLoan ? sql(`select verification_status from loan_records where loan_id='${victimLoan}' and tape_id='${tapeId}'`) : "";
+status === "REJECTED" ? ok("the excluded loan is marked REJECTED in the database") : bad("excluded loan status is " + status);
+const evt = sql(`select count(*) from audit_events where action='LOAN_EXCLUDED' and tape_id='${tapeId}'`);
+Number(evt) > 0 ? ok("the exclusion is in the audit chain with its reason") : bad("no LOAN_EXCLUDED event was written");
+
+// The remaining ~150 are cleared the same way, in bulk, because a browser cannot
+// click through them in a rehearsal — but through the same service calls, not SQL.
+run("npx", ["tsx", "--env-file=.env", "scripts/seed-review.ts", "--tape", tapeId]);
+note("the rest of the queue was worked through the same service paths, out of band");
 await rev.goto(`${BASE}/tapes/${tapeId}`, { waitUntil: "networkidle" });
 await rev.waitForTimeout(1200);
 const attestBtn = rev.locator('button:has-text("Verify tape")');

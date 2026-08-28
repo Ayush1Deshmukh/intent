@@ -43,7 +43,14 @@ export async function attestTape(session: Session, tapeId: string) {
                  inArray(exceptions.status, ["OPEN", "PENDING_APPROVAL"]))))
       .map((r) => r.recordId).filter(Boolean) as string[]);
 
-  const eligible = records.filter((r) => r.loanId && !gatingByRecord.has(r.id));
+  // Three reasons a loan does not get sealed, and all three are reported rather
+  // than silently dropped: it still carries a gating exception, it arrived with no
+  // identifier, or a reviewer excluded it from the tape on the record.
+  const excluded = records.filter((r) => r.verificationStatus === "REJECTED");
+  const unidentified = records.filter((r) => r.verificationStatus !== "REJECTED" && !r.loanId);
+  const eligible = records.filter((r) =>
+    r.verificationStatus !== "REJECTED" && r.loanId && !gatingByRecord.has(r.id));
+
   if (eligible.length === 0) {
     throw new HttpProblem(409, "nothing-to-verify", "No loan on this tape is eligible for verification.");
   }
@@ -95,7 +102,11 @@ export async function attestTape(session: Session, tapeId: string) {
     const attestEvent = await emit(tx, {
       tapeId, actorId: session.userId, actorRole: session.role,
       action: "TAPE_ATTESTED", entityType: "tape", entityId: tapeId,
-      payload: { merkleRoot: root, recordCount: leaves.length, leaves, signer: session.email },
+      payload: {
+        merkleRoot: root, recordCount: leaves.length, leaves, signer: session.email,
+        excludedCount: excluded.length, unidentifiedCount: unidentified.length,
+        excluded: excluded.map((r) => ({ recordId: r.id, loanId: r.loanId })),
+      },
     });
 
     for (const v of verifiedRows) v.eventSeq = attestEvent.seq;

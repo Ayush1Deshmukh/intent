@@ -15,6 +15,7 @@ export const ROLE_BLURB: Record<Role, string> = {
 export type Action =
   | "tape:upload" | "tape:map" | "tape:attest" | "tape:read"
   | "proposal:request" | "proposal:accept" | "proposal:approve" | "exception:waive"
+  | "loan:exclude"
   | "rule:draft" | "rule:approve"
   | "audit:read" | "verify:run" | "export:generate" | "verified:read";
 
@@ -32,6 +33,7 @@ export const POLICY: Record<Action, Role[]> = {
   "proposal:accept":   ["DATA_OPERATOR"],
   "proposal:approve":  ["REVIEWER"],
   "exception:waive":   ["DATA_OPERATOR", "REVIEWER"],
+  "loan:exclude":      ["REVIEWER"],
   "rule:draft":        ["DATA_OPERATOR", "REVIEWER"],
   "rule:approve":      ["REVIEWER"],
   "audit:read":        ["DATA_OPERATOR", "REVIEWER", "DATA_CONSUMER"],

@@ -31,7 +31,7 @@ Demo logins (seeded by `db:seed`, password `demo1234` for all three):
 
 Upload `fixtures/loan_tape.csv`, `fixtures/servicer_update.csv`, and
 `fixtures/document_manifest.csv` together as one tape to see the full defect set
-(209 exceptions across 28 rules, 32 cross-source conflicts). `fixtures/clean_tape_50.csv`
+(209 exceptions, firing 27 of the 28 rules, including 27 cross-source conflicts). `fixtures/clean_tape_50.csv`
 is the zero-exception canary.
 
 One click back to a clean demo state at any time:
