@@ -41,7 +41,7 @@ export default function RecordGrid({ rows }: { rows: Row[] }) {
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by loan id, state, status…" className="max-w-sm" />
       <div className="card overflow-hidden">
         <div className="max-h-[70vh] overflow-auto">
-          <table className="grid">
+          <table className="dtable">
             <thead><tr>{COLS.map((c) => <th key={c}>{c}</th>)}<th>Status</th><th>Hash</th></tr></thead>
             <tbody>
               {filtered.slice(0, 400).map((r) => (

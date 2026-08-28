@@ -44,7 +44,7 @@ export default async function TapesPage() {
             : "A Data Operator needs to upload a tape before there is anything to review."} />
       ) : (
         <div className="card overflow-hidden">
-          <table className="grid">
+          <table className="dtable">
             <thead>
               <tr><th>Tape</th><th>Status</th><th className="tnum">Rows</th><th className="tnum">Exceptions</th>
                   <th className="tnum">Gating open</th><th>Merkle root</th><th>Uploaded by</th></tr>

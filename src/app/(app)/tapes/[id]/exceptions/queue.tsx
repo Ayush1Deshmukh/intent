@@ -107,7 +107,7 @@ export default function Queue({ rows, clusters, canAct, canWaive, canExclude }: 
 
       <div className="card overflow-hidden">
         <div className="max-h-[62vh] overflow-auto">
-          <table className="grid">
+          <table className="dtable">
             <thead>
               <tr><th>Loan</th><th>Rule</th><th>Field</th><th>Observed</th><th>Expected</th><th>Severity</th><th>Status</th><th></th></tr>
             </thead>

@@ -43,7 +43,7 @@ export default async function RulesPage() {
         <section key={cat} className="flex flex-col gap-2">
           <h2 className="text-base font-semibold">{CATEGORY_LABEL[cat] ?? cat}</h2>
           <div className="card overflow-hidden">
-            <table className="grid">
+            <table className="dtable">
               <thead>
                 <tr><th>Code</th><th>Rule</th><th>Severity</th><th>Expression</th><th className="tnum">Fired</th><th>State</th></tr>
               </thead>

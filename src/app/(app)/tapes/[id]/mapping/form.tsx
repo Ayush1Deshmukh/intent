@@ -34,7 +34,7 @@ export default function MappingForm({ tapeId, rows, fields }: {
       <input type="hidden" name="tapeId" value={tapeId} />
 
       <div className="card overflow-hidden">
-        <table className="grid">
+        <table className="dtable">
           <thead>
             <tr>
               <th>Source column</th><th>Sample values</th><th>Maps to</th>

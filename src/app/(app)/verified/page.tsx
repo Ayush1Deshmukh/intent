@@ -1,10 +1,12 @@
-import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { db, verifiedRecords, tapes, attestations } from "@/lib/db";
 import { requireRolePage } from "@/lib/auth";
 import { Empty } from "@/components/ui";
+import Ledger, { LedgerRow } from "./ledger";
 
 export const dynamic = "force-dynamic";
+
+const CAP = 400;
 
 export default async function VerifiedPage() {
   await requireRolePage("verified:read");
@@ -15,7 +17,19 @@ export default async function VerifiedPage() {
     .innerJoin(tapes, eq(tapes.id, verifiedRecords.tapeId))
     .leftJoin(attestations, eq(attestations.tapeId, verifiedRecords.tapeId))
     .orderBy(desc(verifiedRecords.createdAt))
-    .limit(400);
+    .limit(CAP + 1);
+
+  const capped = rows.length > CAP;
+  const items: LedgerRow[] = rows.slice(0, CAP).map((r) => {
+    const p = r.v.payload as Record<string, string | number | null>;
+    return {
+      id: r.v.id, loanId: r.v.loanId, tape: r.tape, tapeId: r.tapeId,
+      balance: p.currentBalance == null ? null : String(p.currentBalance),
+      rate: p.interestRate == null ? null : String(p.interestRate),
+      status: p.paymentStatus == null ? null : String(p.paymentStatus),
+      signedBy: r.v.verifiedByEmail, recordHash: r.v.recordHash,
+    };
+  });
 
   return (
     <div className="flex flex-col gap-5">
@@ -29,38 +43,13 @@ export default async function VerifiedPage() {
         </p>
       </div>
 
-      {rows.length === 0 ? (
+      {items.length === 0 ? (
         <Empty
           title="Nothing has been signed off yet"
           hint="A Reviewer seals a tape once no blocking or critical exception remains open."
         />
       ) : (
-        <div className="card overflow-hidden">
-          <table className="grid">
-            <thead>
-              <tr><th>Loan</th><th>Tape</th><th>Balance</th><th>Rate</th><th>Status</th><th>Signed by</th><th>Record hash</th><th></th></tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => {
-                const p = r.v.payload as Record<string, string | number | null>;
-                return (
-                  <tr key={r.v.id}>
-                    <td className="mono text-xs font-medium">{r.v.loanId}</td>
-                    <td className="text-xs"><Link href={`/tapes/${r.tapeId}`}>{r.tape}</Link></td>
-                    <td className="tnum mono text-xs text-right">{p.currentBalance ?? "—"}</td>
-                    <td className="tnum mono text-xs text-right">{p.interestRate ?? "—"}</td>
-                    <td className="text-xs">{p.paymentStatus ?? "—"}</td>
-                    <td className="text-xs text-muted">{r.v.verifiedByEmail}</td>
-                    <td className="mono text-[0.62rem] text-muted" title={r.v.recordHash}>{r.v.recordHash.slice(0, 14)}…</td>
-                    <td>
-                      <a className="text-xs" href={`/api/v1/verified/${r.tapeId}?loanId=${r.v.loanId}`} target="_blank" rel="noreferrer">proof</a>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Ledger rows={items} capped={capped} />
       )}
     </div>
   );

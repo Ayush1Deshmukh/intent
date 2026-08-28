@@ -65,15 +65,18 @@ h1, h2, h3 { font-family: var(--font-serif); letter-spacing: -0.01em; text-wrap:
 .btn-danger { background: var(--color-critsoft); border-color: var(--color-crit); color: var(--color-crit); }
 .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
 
-table.grid { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-table.grid th {
+/* Named `dtable`, not `grid`: Tailwind owns `.grid` (display: grid), and a table
+   set to display:grid stops being a table — the header cells silently stop lining
+   up with the columns under them, on every table in the app. */
+table.dtable { display: table; width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+table.dtable th {
   text-align: left; font-family: var(--font-mono); font-size: 0.63rem; letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--color-muted); font-weight: 500;
   background: var(--color-surface2); padding: 9px 12px; white-space: nowrap;
   position: sticky; top: 0; z-index: 1;
 }
-table.grid td { padding: 9px 12px; border-top: 1px solid var(--color-line); vertical-align: top; }
-table.grid tbody tr:hover { background: var(--color-surface2); }
+table.dtable td { padding: 9px 12px; border-top: 1px solid var(--color-line); vertical-align: top; }
+table.dtable tbody tr:hover { background: var(--color-surface2); }
 
 input, select, textarea {
   border: 1px solid var(--color-line2); border-radius: 7px; padding: 7px 10px;

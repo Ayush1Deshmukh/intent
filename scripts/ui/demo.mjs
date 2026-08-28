@@ -102,7 +102,7 @@ step("3  operator: open one exception, explain it, propose a fix, accept it");
 await op.locator('select').first().selectOption("XFD-003").catch(() => {});
 await op.waitForTimeout(900);
 // pick a row that actually carries a loan id, so the diff is checkable in SQL afterwards
-const withId = op.locator('table.grid tbody tr').filter({ hasText: /LN-\d+/ }).first();
+const withId = op.locator('table.dtable tbody tr').filter({ hasText: /LN-\d+/ }).first();
 (await withId.count()) ? ok("found an identified row failing XFD-003") : bad("no identified XFD-003 row");
 await withId.locator('button:has-text("Open")').click();
 await op.waitForTimeout(900);
@@ -194,7 +194,7 @@ await rev.goto(`${BASE}/tapes/${tapeId}/exceptions`, { waitUntil: "networkidle" 
 await rev.waitForTimeout(2000);
 await rev.locator('select').first().selectOption("XFD-002").catch(() => {});   // maturity before origination
 await rev.waitForTimeout(900);
-const target = rev.locator('table.grid tbody tr').filter({ hasText: /LN-\d+/ }).first();
+const target = rev.locator('table.dtable tbody tr').filter({ hasText: /LN-\d+/ }).first();
 const victimLoan = (await target.innerText()).match(/LN-\d+/)?.[0];
 await target.locator('button:has-text("Open")').click();
 await rev.waitForTimeout(900);

@@ -115,7 +115,7 @@ export default function DocsPage() {
           </p>
         </div>
         <div className="card overflow-hidden">
-          <table className="grid">
+          <table className="dtable">
             <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead>
             <tbody>
               {Object.entries(loan.properties ?? {}).map(([name, p]) => (

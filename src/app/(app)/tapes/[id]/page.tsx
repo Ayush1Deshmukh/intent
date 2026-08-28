@@ -74,7 +74,7 @@ export default async function TapePage({ params }: { params: Promise<{ id: strin
           <SeverityBar counts={counts.bySeverity} />
           <div>
             <h3 className="eyebrow mb-2">Rules failing most</h3>
-            <table className="grid">
+            <table className="dtable">
               <tbody>
                 {topRules.map((r) => (
                   <tr key={r.code}>

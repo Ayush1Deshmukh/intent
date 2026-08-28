@@ -63,7 +63,7 @@ export default async function AuditPage({ params, searchParams }: {
 
           <div className="card overflow-hidden">
             <div className="max-h-[68vh] overflow-auto">
-              <table className="grid">
+              <table className="dtable">
                 <thead><tr><th className="tnum">Seq</th><th>Action</th><th>Actor</th><th>Entity</th><th>Prev</th><th>Hash</th></tr></thead>
                 <tbody>
                   {shown.slice(0, 500).map((r) => (
