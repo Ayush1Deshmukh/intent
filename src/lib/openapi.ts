@@ -273,6 +273,35 @@ export function buildOpenApi(origin: string) {
           responses: { 200: { description: "Waived" }, 409: problem },
         },
       },
+      "/api/v1/exceptions/{id}/exclude": {
+        post: {
+          tags: ["Review"], summary: "Drop this exception's loan from the tape",
+          description: [roleNote("loan:exclude"),
+            "The escape hatch for a blocking exception with no defensible repair — the loan is",
+            "excluded rather than given an invented value. It is marked REJECTED, its open",
+            "exceptions close, it never enters the verified ledger, and the count and reason are",
+            "carried in the attestation. Requires a written reason. See ADR 0007."].join(" "),
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: {
+              type: "object", required: ["reason"],
+              properties: { reason: { type: "string", minLength: 4 } },
+            } } },
+          },
+          responses: {
+            200: { description: "Loan excluded", content: { "application/json": { schema: {
+              type: "object",
+              properties: {
+                ok: { type: "boolean" }, recordId: { type: "string" },
+                loanId: { type: "string", nullable: true },
+                closed: { type: "integer", description: "open exceptions closed on that loan" },
+              },
+            } } } },
+            400: problem, 403: problem, 409: problem,
+          },
+        },
+      },
       "/api/v1/tapes/{id}/attest": {
         post: {
           tags: ["Verification"], summary: "Sign off the tape",

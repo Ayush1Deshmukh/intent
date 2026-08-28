@@ -43,13 +43,26 @@ curl -X POST -H "x-demo-token: $DEMO_RESET_TOKEN" http://localhost:3000/api/demo
 ## Verify, test, break it
 
 ```bash
-npm run test    # 89 unit tests: coercion, rules engine, hashing, policy matrix
-npm run e2e     # full pipeline against a real Postgres db, no mocks —
-                # ingest -> validate -> propose -> review -> attest -> verify,
-                # plus two live tamper scenarios (edited balance, edited audit event)
+npm run test          # 113 unit tests: coercion, rules engine, hashing, policy matrix,
+                      # and the two descriptions of every AI output schema agreeing
+npm run e2e           # full pipeline against a real Postgres db, no mocks —
+                      # ingest -> validate -> propose -> accept -> approve -> exclude
+                      # -> attest -> verify, plus two live tamper scenarios
+npm run ui:demo       # the five-minute demo, driven through a real browser as all three
+                      # roles; asserts against the database, not against the screen
+npm run ai:check      # calls the model for real and reports live-vs-fallback per job
+npm run demo:reviewed # build the second tape: a queue worked all the way to sign-off
+                      # through the real service paths — 1107 audit events, and it verifies
+
 npm run tamper -- LN-000117 --balance 1   # corrupt one verified record directly in SQL,
-                                           # then hit /verify and watch it get named
+                                          # then hit /verify and watch it get named
+npm run tamper -- --event 5               # or edit an audit event and break the chain
+npm run tamper -- --restore               # put both back; the demo is re-runnable
 ```
+
+Start here to read it: **[`DEMO.md`](DEMO.md)** is the five-minute walkthrough,
+**[`docs/AI_DEVELOPMENT_LOG.md`](docs/AI_DEVELOPMENT_LOG.md)** is how it was built with
+agentic tooling and what had to be thrown away.
 
 ## Architecture in one page
 
@@ -85,7 +98,12 @@ demonstrable with `AI_ENABLED=false`.
   signed — `verifyTape()` always recomputes from the live rows, never trusts a stored
   hash.
 
-Full rationale for each decision is in `docs/adr/0001` through `0006`.
+A gating exception with no defensible repair is the one case the workflow could not
+absorb: a blocker cannot be waived, and inventing a value is the failure mode this whole
+system exists to prevent. A reviewer **excludes the loan** instead — marked rejected,
+never sealed, with the count and the reason carried in the attestation (ADR 0007).
+
+Full rationale for each decision is in `docs/adr/0001` through `0007`.
 
 ## Stack
 

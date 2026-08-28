@@ -8,8 +8,9 @@ Verified Tape is a loan data verification copilot. One sentence holds the whole 
 
 These are not style preferences. Breaking one breaks the product's central claim.
 
-1. **No code path writes to `loanRecords` except `approveProposal()`** in `src/lib/service/review.ts`.
-   Ingest creates records; nothing else mutates them.
+1. **No code path writes a loan's *values* except `approveProposal()`** in
+   `src/lib/service/review.ts`. Ingest creates records; `excludeLoan()` may set
+   `verificationStatus` to `REJECTED` and nothing else. No other mutation exists.
 2. **`emit()` is called inside the same transaction as the mutation, and before it.**
    The audit event exists even if the write fails; the write never exists without the event.
 3. **Model output is parsed with a Zod schema or discarded.** Never coerced, never
@@ -62,4 +63,18 @@ npm run db:seed        # users, servicers, 28 rules
 npm run test           # unit: coercion, rules, hashing, policy
 npm run e2e            # full pipeline against a real database, including the tamper checks
 npm run tamper -- LN-000117 --balance 1     # the demo's last thirty seconds
+npm run tamper -- --restore                # put it back
+npm run ui:demo        # the whole demo through a real browser, all three roles
+npm run ai:check       # call the model for real; reports live-vs-fallback per job
+npm run demo:reviewed  # a second tape, worked to sign-off through the real service paths
 ```
+
+## Two things that are easy to get wrong
+
+- **A gating exception cannot be waived.** When there is no defensible repair the reviewer
+  calls `excludeLoan()` — the loan is dropped from the tape with a written reason, not
+  given an invented value. ADR 0007. Never add a waive path for BLOCKER or CRITICAL.
+- **Never send `temperature` to the model.** Current models reject sampling parameters
+  outright, and `callModel()` falls back silently, so the failure looks like "the AI is
+  off" rather than an error. Determinism comes from `output_config.format` and the Zod
+  gate, not from temperature.

@@ -142,27 +142,46 @@ rationale, the evidence, the confidence, and **who accepted it**.
 
 Note the record version has gone to v2 and its hash has changed.
 
-## 7 · Sign-off is refused · 20s
+## 7 · Sign-off is refused, and the one honest way out · 45s
 
 **Reviewer → the tape overview.** The "Verify tape" button is disabled and says why:
 *N gating exceptions block sign-off.*
 
 > Warnings can be waived, with a written reason that goes into the audit chain. Blockers
-> and criticals cannot be waived at all. You clear them or you do not sign.
+> and criticals cannot be waived at all.
 
-For the demo, either clear them by hand or use a pre-cleared tape (see *Two tapes*,
-below). Then **Verify tape**.
+Which raises the obvious question, so answer it before it is asked. **Exception queue →
+filter to XFD-002, maturity on or before origination → Open.**
+
+There is no "Propose a fix" here — the reviewer does not make changes. And this one has
+no defensible repair anyway: the tape says the loan matures before it was funded, and
+neither source can say which of the two dates is wrong.
+
+Point at the red panel:
+
+> A blocker can't be waived and this one can't be fixed. So the loan gets dropped from
+> the tape, not guessed at. It's marked rejected, it never enters the verified ledger,
+> and the count and my reason go into the attestation — which is what actually happens in
+> loan review. Bad loans get kicked.
+
+Type a reason (the button stays disabled until you do) and **Exclude this loan**.
+
+> That wrote a `LOAN_EXCLUDED` event into the same hash chain as everything else. Nothing
+> in this system, including dropping a loan, happens off the record.
+
+For the demo, switch to the pre-reviewed tape here (see *Two tapes*, below). Then
+**Verify tape**.
 
 ## 8 · The artifact · 30s
 
-494 loans sealed into the verified ledger, each with its payload, its lineage back to the
-source file and row, the reviewer who signed it, and its hash. One Merkle root over all of
-them, signed.
+448 loans sealed into the verified ledger — 500 rows in, 52 excluded — each with its
+payload, its lineage back to the source file and row, the reviewer who signed it, and its
+hash. One Merkle root over all of them, signed.
 
 **Click "Check integrity".**
 
-> Chain intact over 746 events, and all 494 sealed records still match the attested root.
-> That number is recomputed from the live rows right now — it never reads the stored hash,
+> Chain intact over 1107 events, and all 448 sealed records still match the attested root.
+> That root is recomputed from the live rows right now — it never reads the stored hash,
 > because a stored hash is a copy of the claim, not evidence for it.
 
 ## 9 · The consumer · 25s
@@ -178,10 +197,14 @@ Try to reach `/tapes/new` → denied.
 > There is no write action for this role anywhere in the policy table. It is read-only by
 > absence, not by a hidden button.
 
-Export the verified tape. Point out the Merkle proof shipped with it:
+Export the verified tape. It is a zip, and the thing to open is `VERIFY.md`:
 
-> A downstream system can verify any single loan against the signed root offline, without
-> calling this API and without trusting this database.
+> That file tells you how to check this tape without this system — the exact hash formula
+> for the event chain, the leaf ordering for the Merkle root, and this export's own result.
+> `attestation.json` carries the signed root and every leaf, so a downstream platform can
+> recompute it offline. There is also a per-loan proof endpoint if you only care about one
+> loan: `GET /api/v1/verified/{tapeId}?loanId=LN-000001` returns the record and its Merkle
+> proof, which verifies against the root without trusting this API.
 
 ## 10 · Break it, live · 40s
 
@@ -224,14 +247,26 @@ npm run tamper -- --restore     # puts everything back, so you can demo again
 
 ## Two tapes, and saying so
 
-You cannot triage 137 gating exceptions on camera. The honest way to handle this is to
-say so:
+You cannot triage 149 gating exceptions on camera. Set up the second tape before you
+start:
 
-> I am not going to clear a hundred and forty exceptions while you watch. Here is a second
-> tape that has already been through review, so you can see the sign-off and the
-> verification on real data.
+```bash
+npm run demo:reviewed
+```
 
-Judges respond well to this. Pretending otherwise is the thing that looks bad.
+That builds **Q2 2026 acquisition tape — signed off**: the same 500 rows, worked all the
+way through. And it is worth saying exactly how, because it is not a shortcut:
+
+> This one has already been through review — 84 exceptions repaired under maker-checker,
+> 57 waived with written reasons, 52 loans excluded. Not by editing the database: every
+> one of those went through the same service calls you just watched me click, by the same
+> two people, writing 1107 audit events. That is why it verifies.
+
+Then say the honest thing:
+
+> I'm not going to clear a hundred and fifty exceptions while you watch.
+
+Judges respond well to this. Pretending otherwise is what looks bad.
 
 ## If something goes wrong
 
@@ -265,6 +300,11 @@ and already signed. [ADR 0003](docs/adr/0003-two-hashes.md).
 The system records both values, both source files, and raises a gating exception. It never
 picks a winner. The AI will *recommend* the servicer figure when its report date is newer,
 and show you both dates — but a human decides. [ADR 0005](docs/adr/0005-conflicts-are-raised-not-resolved.md).
+
+**"What if a blocker can't be fixed at all?"**
+The reviewer drops the loan from the tape, with a written reason, and it never enters the
+verified ledger. That is beat 7. The alternative — letting someone waive a blocker, or
+edit the value directly — is the thing this whole system is built to prevent.
 
 **"Does any of this survive a hostile DBA?"**
 That is beat 10. The verification recomputes from live rows and never trusts a stored
