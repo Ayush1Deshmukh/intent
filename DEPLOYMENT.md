@@ -18,8 +18,18 @@ DATABASE_URL="<neon-pooled-url>" npx drizzle-kit push
 DATABASE_URL="<neon-pooled-url>" npx tsx scripts/seed.ts
 ```
 
-`seed.ts` creates the three demo users, six servicers and 28 rules. Nothing else needs
-to be loaded ahead of time — the demo tape is uploaded through the UI.
+`seed.ts` creates the three demo users, six servicers and 28 rules. The demo tape itself
+is loaded through the UI in one click, so nothing else has to be prepared.
+
+Optionally, seed the second tape — the one that has already been through review, which
+beats 7 and 8 of the demo use:
+
+```bash
+DATABASE_URL="<neon-pooled-url>" npx tsx scripts/seed-review.ts
+```
+
+It takes a couple of minutes against Neon, because it works all 209 exceptions through the
+real service paths rather than closing them with an UPDATE. That is the point of it.
 
 ## 2 · Push the repo
 
@@ -46,6 +56,10 @@ deploys to work):
 | `ANTHROPIC_API_KEY` | your key, or leave unset |
 | `ANTHROPIC_MODEL` | `claude-opus-5` |
 
+Before deploying with AI on, run `npm run ai:check` locally against the same key. It calls
+all four jobs for real and prints, per job, whether it reached the API or fell back — which
+is the only way to tell the difference, because a failed call degrades silently by design.
+
 **Do not reuse the development `AUTH_SECRET`.** It signs session JWTs.
 
 With `AI_ENABLED` unset or `false` the whole application still works — every AI feature
@@ -61,8 +75,17 @@ curl -s https://<your-app>.vercel.app/api/openapi | head -c 200   # spec renders
 curl -si https://<your-app>.vercel.app/login | head -1            # 200
 ```
 
-Then log in as `operator@intain.demo` / `demo1234`, upload the three files from
-`fixtures/`, and confirm you get 209 exceptions.
+Then log in as `operator@intain.demo` / `demo1234`, click **Load the demo tape**, confirm
+the mapping, and check you get 209 exceptions.
+
+Or drive the whole thing against the deployed instance:
+
+```bash
+BASE_URL="https://<your-app>.vercel.app" npm run ui:smoke
+```
+
+`ui:demo` is the fuller rehearsal but it reads the database directly through a local
+Docker container, so it only runs against a local instance.
 
 ## 5 · Reset between demos
 
