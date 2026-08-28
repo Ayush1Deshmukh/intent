@@ -14,7 +14,10 @@
     "tamper": "tsx --env-file=.env scripts/tamper.ts",
     "db:generate": "drizzle-kit generate",
     "e2e": "tsx --env-file=.env scripts/e2e.ts",
-    "dry-run": "tsx scripts/dry-run.ts"
+    "dry-run": "tsx scripts/dry-run.ts",
+    "ui:smoke": "node scripts/ui/smoke.mjs",
+    "ui:flow": "node scripts/ui/flow.mjs",
+    "ui:demo": "node scripts/ui/demo.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",

@@ -2,12 +2,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Subject } from "@/components/ui";
 
 type Item = {
   id: string; field: string; from: string | null; to: string | null; rationale: string;
   confidence: number; source: string; model: string | null;
   evidence: { label: string; value: string }[] | null;
-  loanId: string | null; tapeName: string; tapeId: string;
+  loanId: string | null; rowNumber: number | null; tapeName: string; tapeId: string;
   ruleCode: string; ruleName: string; severity: string; acceptedBy: string; acceptedEmail: string;
 };
 
@@ -37,7 +38,7 @@ export default function ReviewList({ items }: { items: Item[] }) {
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex flex-col gap-1">
               <span className="flex items-center gap-2">
-                <span className="mono text-sm font-medium">{it.loanId ?? "tape-level"}</span>
+                <Subject loanId={it.loanId} rowNumber={it.rowNumber} className="text-sm font-medium" />
                 <span className={`chip sev-${it.severity}`}>{it.severity.toLowerCase()}</span>
                 <span className="chip bg-surface2 text-muted">{it.ruleCode}</span>
               </span>

@@ -1,9 +1,10 @@
 "use client";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Subject, subjectLabel } from "@/components/ui";
 
 type Row = {
-  id: string; loanId: string | null; field: string | null; observed: string | null;
+  id: string; loanId: string | null; rowNumber: number | null; field: string | null; observed: string | null;
   expected: string | null; severity: string; status: string; clusterKey: string | null;
   ruleCode: string; ruleName: string; ruleDescription: string; category: string;
 };
@@ -113,7 +114,7 @@ export default function Queue({ rows, clusters, canAct, canWaive }: {
             <tbody>
               {filtered.slice(0, 400).map((r) => (
                 <tr key={r.id}>
-                  <td className="mono text-xs whitespace-nowrap">{r.loanId ?? <span className="text-muted">tape-level</span>}</td>
+                  <td><Subject loanId={r.loanId} rowNumber={r.rowNumber} /></td>
                   <td><span className="mono text-xs text-muted">{r.ruleCode}</span> <span className="block text-xs">{r.ruleName}</span></td>
                   <td className="mono text-xs">{r.field ?? "—"}</td>
                   <td className="max-w-[220px] truncate" title={r.observed ?? ""}>{r.observed ?? "—"}</td>
@@ -167,7 +168,7 @@ function Drawer({ row, canAct, canWaive, onClose }: {
           <div className="flex flex-col gap-1">
             <span className="eyebrow">{row.category.replace("_", " ")} · {row.ruleCode}</span>
             <h2 className="text-lg font-semibold">{row.ruleName}</h2>
-            <span className="mono text-xs text-muted">{row.loanId ?? "tape-level finding"}</span>
+            <span className="mono text-xs text-muted">{subjectLabel(row.loanId, row.rowNumber)}</span>
           </div>
           <button className="btn btn-sm" onClick={onClose}>Close</button>
         </div>

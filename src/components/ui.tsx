@@ -67,3 +67,25 @@ export function Hash({ value, len = 12 }: { value: string; len?: number }) {
 export function Crumb({ href, children }: { href: string; children: ReactNode }) {
   return <Link href={href} className="text-sm hover:underline">{children}</Link>;
 }
+
+/**
+ * What a finding is about. Three cases, and conflating them is misleading:
+ * a real loan id; a row that exists but arrived with no identifier (itself the
+ * defect STR-001 is reporting); and a finding about the tape as a whole.
+ */
+export function Subject({ loanId, rowNumber, className = "" }: {
+  loanId: string | null; rowNumber: number | null; className?: string;
+}) {
+  if (loanId) return <span className={`mono text-xs whitespace-nowrap ${className}`}>{loanId}</span>;
+  if (rowNumber != null) {
+    return (
+      <span className={`mono text-xs whitespace-nowrap text-muted ${className}`} title="This row exists but arrived without a loan identifier">
+        row {rowNumber} <span className="not-italic">· no id</span>
+      </span>
+    );
+  }
+  return <span className={`text-xs text-muted whitespace-nowrap ${className}`}>tape-level</span>;
+}
+
+export const subjectLabel = (loanId: string | null, rowNumber: number | null) =>
+  loanId || (rowNumber != null ? `row ${rowNumber} · no id` : "tape-level");

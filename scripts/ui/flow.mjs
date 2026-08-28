@@ -4,11 +4,13 @@
  * reviewer sees pending changes; consumer verifies.
  */
 import { chromium } from "playwright";
-const BASE="http://localhost:3000";
-const EXE="/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
+const BASE=process.env.BASE_URL||"http://localhost:3000";
+const SHOTS=process.env.SHOTS_DIR||"artifacts/shots";
+await (await import("node:fs/promises")).mkdir(SHOTS,{recursive:true});
+const EXE=process.env.PW_CHROMIUM||undefined;   // default download on most machines
 const fails=[]; const ok=m=>console.log("  PASS  "+m); const bad=m=>{console.log("  FAIL  "+m);fails.push(m);};
-const b=await chromium.launch({executablePath:EXE});
-const shot=(p,n)=>p.screenshot({path:`/tmp/shots/${n}.png`,fullPage:true});
+const b=await chromium.launch(EXE?{executablePath:EXE}:{});
+const shot=(p,n)=>p.screenshot({path:`${SHOTS}/${n}.png`,fullPage:true});
 
 async function login(email){
   const ctx=await b.newContext({viewport:{width:1440,height:1100}});

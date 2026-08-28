@@ -1,6 +1,6 @@
 import { desc, eq, inArray } from "drizzle-orm";
 
-import { db, proposals, exceptions, rules, loanRecords, users, tapes } from "@/lib/db";
+import { db, proposals, exceptions, rules, loanRecords, rawRecords, users, tapes } from "@/lib/db";
 import { requireRolePage } from "@/lib/auth";
 import { Empty } from "@/components/ui";
 import ReviewList from "./list";
@@ -12,7 +12,7 @@ export default async function ReviewPage() {
 
   const rows = await db.select({
     p: proposals, exc: exceptions, rule: rules,
-    loanId: loanRecords.loanId, recordId: loanRecords.id,
+    loanId: loanRecords.loanId, recordId: loanRecords.id, rowNumber: rawRecords.rowNumber,
     tapeName: tapes.name, tapeId: tapes.id, acceptedBy: users.name, acceptedEmail: users.email,
   })
     .from(proposals)
@@ -20,6 +20,7 @@ export default async function ReviewPage() {
     .innerJoin(rules, eq(rules.id, exceptions.ruleId))
     .innerJoin(tapes, eq(tapes.id, exceptions.tapeId))
     .leftJoin(loanRecords, eq(loanRecords.id, exceptions.recordId))
+    .leftJoin(rawRecords, eq(rawRecords.id, loanRecords.rawRecordId))
     .leftJoin(users, eq(users.id, proposals.acceptedById))
     .where(inArray(proposals.status, ["ACCEPTED_BY_OPERATOR"]))
     .orderBy(desc(proposals.createdAt));
@@ -43,7 +44,7 @@ export default async function ReviewPage() {
         <ReviewList items={rows.map((r) => ({
           id: r.p.id, field: r.p.field, from: r.p.fromValue, to: r.p.toValue,
           rationale: r.p.rationale, confidence: r.p.confidence, source: r.p.source, model: r.p.model,
-          evidence: r.p.evidence, loanId: r.loanId, tapeName: r.tapeName, tapeId: r.tapeId,
+          evidence: r.p.evidence, loanId: r.loanId, rowNumber: r.rowNumber, tapeName: r.tapeName, tapeId: r.tapeId,
           ruleCode: r.rule.code, ruleName: r.rule.name, severity: r.exc.severity,
           acceptedBy: r.acceptedBy ?? "—", acceptedEmail: r.acceptedEmail ?? "",
         }))} />
