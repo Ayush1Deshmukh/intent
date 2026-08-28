@@ -44,7 +44,7 @@ deploys to work):
 | `MAX_TAPE_ROWS` | `5000` |
 | `AI_ENABLED` | `true` only if you're also setting the key below |
 | `ANTHROPIC_API_KEY` | your key, or leave unset |
-| `ANTHROPIC_MODEL` | `claude-sonnet-4-5` |
+| `ANTHROPIC_MODEL` | `claude-opus-5` |
 
 **Do not reuse the development `AUTH_SECRET`.** It signs session JWTs.
 

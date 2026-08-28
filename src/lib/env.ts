@@ -4,7 +4,7 @@ const Env = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   AUTH_SECRET: z.string().min(16, "AUTH_SECRET must be at least 16 characters"),
   ANTHROPIC_API_KEY: z.string().optional().default(""),
-  ANTHROPIC_MODEL: z.string().optional().default("claude-sonnet-4-5"),
+  ANTHROPIC_MODEL: z.string().optional().default("claude-opus-5"),
   AI_ENABLED: z.enum(["true", "false"]).optional().default("false"),
   DEMO_RESET_TOKEN: z.string().optional().default("demo-reset"),
   MAX_TAPE_ROWS: z.coerce.number().int().positive().optional().default(5000),

@@ -17,10 +17,11 @@
     "dry-run": "tsx scripts/dry-run.ts",
     "ui:smoke": "node scripts/ui/smoke.mjs",
     "ui:flow": "node scripts/ui/flow.mjs",
-    "ui:demo": "node scripts/ui/demo.mjs"
+    "ui:demo": "node scripts/ui/demo.mjs",
+    "ai:check": "tsx --env-file=.env scripts/ai-check.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.68.0",
+    "@anthropic-ai/sdk": "^0.122.0",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
     "decimal.js": "^10.4.3",
