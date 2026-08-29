@@ -131,7 +131,18 @@ into a printed number. Fixed in commit `ad3e0d2`.
 **The transferable lesson:** a graceful fallback and a silent failure look identical from
 the outside. Every fallback path in this system now has something that reports which side
 of it you are on — the provenance chip in the drawer, the `source` field on every
-proposal, the live/fallback counter in `ai:check`.
+proposal, the AI panel on `/docs`, and the live/fallback counter in `ai:check`.
+
+**A second, larger consequence.** Being forced to look closely at the transport made it
+obvious that it was hard-wired to one vendor for no architectural reason. The AI here is
+advisory by construction: it emits a proposal, a human accepts, a second human approves.
+Nothing downstream depends on *which* model wrote the proposal — only on the Zod gate it
+has to pass. So the provider became `src/lib/ai/providers.ts`, and everything except
+Anthropic now goes through one OpenAI-shaped `fetch`. That took the project's last paid
+dependency to zero: Groq, Gemini, OpenRouter, Cerebras and a local Ollama all have free
+tiers, and the deterministic twin still answers when a free-tier key is rate-limited.
+`tests/providers.test.ts` pins every branch of the resolution, because it is config logic
+that fails silently in exactly the way this section is about.
 
 ### 3.2 Null treated as a rule violation
 

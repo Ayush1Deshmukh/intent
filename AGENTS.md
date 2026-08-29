@@ -74,7 +74,11 @@ npm run demo:reviewed  # a second tape, worked to sign-off through the real serv
 - **A gating exception cannot be waived.** When there is no defensible repair the reviewer
   calls `excludeLoan()` — the loan is dropped from the tape with a written reason, not
   given an invented value. ADR 0007. Never add a waive path for BLOCKER or CRITICAL.
-- **Never send `temperature` to the model.** Current models reject sampling parameters
-  outright, and `callModel()` falls back silently, so the failure looks like "the AI is
-  off" rather than an error. Determinism comes from `output_config.format` and the Zod
-  gate, not from temperature.
+- **The model provider is pluggable, and must stay that way.** `src/lib/ai/providers.ts`
+  holds the catalogue; everything except Anthropic speaks the OpenAI chat-completions
+  shape through one transport. The point is that the project has no paid dependency —
+  do not add code that assumes a specific vendor above `callModel()`.
+- **Never send `temperature` to an Anthropic model.** Current ones reject sampling
+  parameters outright, and `callModel()` falls back silently, so the failure looks like
+  "the AI is off" rather than an error. The OpenAI-shaped providers do accept it, and
+  send `temperature: 0`.

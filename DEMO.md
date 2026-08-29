@@ -273,7 +273,7 @@ Judges respond well to this. Pretending otherwise is what looks bad.
 | Symptom | Do this |
 |---|---|
 | Demo state is dirty | `curl -X POST -H "x-demo-token: $DEMO_RESET_TOKEN" <url>/api/demo/reset` |
-| AI feels slow, or the venue wifi is down | Nothing. Every AI feature has a deterministic fallback and the provenance chip will honestly say "rule-based". Run `npm run ai:check` beforehand to warm the cache — responses are cached by prompt hash, so the demo clicks are instant and offline. |
+| AI feels slow, the free tier rate-limits you, or the venue wifi is down | Nothing. Every AI feature has a deterministic fallback and the provenance chip will honestly say "rule-based". Run `npm run ai:check` beforehand to warm the cache — responses are cached by prompt hash, so the demo clicks are instant and offline. |
 | A tamper demo left the data broken | `npm run tamper -- --restore` |
 | The deployed instance is unreachable | Run locally. `npm run dev` and the same nine beats work. |
 
@@ -281,9 +281,16 @@ Judges respond well to this. Pretending otherwise is what looks bad.
 
 **"Is the AI actually doing anything, or is this all rules?"**
 Both, deliberately, and you can always tell which. Every explanation, proposal and cluster
-carries a provenance chip. `npm run ai:check` prints, per job, whether it reached the model
-or fell back. The reason the fallback exists is that a data-verification tool that stops
-working when an API is down is not a data-verification tool.
+carries a provenance chip, and `/docs` names the provider and model currently answering.
+`npm run ai:check` prints, per job, whether it reached the model or fell back. The reason
+the fallback exists is that a data-verification tool that stops working when an API is
+down is not a data-verification tool.
+
+**"Which model is this, and what does it cost to run?"**
+Nothing. Because the AI only advises, the provider is a configuration line — Groq, Gemini,
+OpenRouter, Cerebras and a local Ollama all work through one transport, and all of them
+have a free tier with no credit card. Hosting is Vercel hobby and the database is Neon
+free. There is no paid dependency anywhere in the project.
 
 **"Why not let the AI fix the data directly?"**
 Because then the audit trail says a model changed a balance and nobody can say why. Model

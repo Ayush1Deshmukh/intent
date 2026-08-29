@@ -13,7 +13,8 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db, tapes, exceptions, rules } from "@/lib/db";
 import { explainException, proposeFix, clusterExceptions, authorRule } from "@/lib/ai/jobs";
-import { aiEnabled, modelName } from "@/lib/ai/client";
+import { aiEnabled, modelName, provider, providerLabel } from "@/lib/ai/client";
+import { setupHint } from "@/lib/ai/providers";
 
 const wanted = new Set(process.argv.slice(2).filter((a) => !a.startsWith("-")));
 const want = (job: string) => wanted.size === 0 || wanted.has(job);
@@ -28,13 +29,15 @@ let live = 0, fell = 0;
 
 async function main() {
   head("configuration");
+  const p = provider();
+  kv("provider", providerLabel());
   kv("model", modelName());
-  kv("AI_ENABLED", process.env.AI_ENABLED ?? "(unset)");
-  kv("key present", process.env.ANTHROPIC_API_KEY ? "yes" : "no");
-  kv("aiEnabled()", aiEnabled());
+  kv("endpoint", p ? p.baseUrl : "—");
+  kv("key", p ? (p.apiKey ? `set (${p.apiKey.length} chars)` : "none needed") : "not configured");
   if (!aiEnabled()) {
-    line("\n  AI is off. Set ANTHROPIC_API_KEY and AI_ENABLED=true in .env, then re-run.");
-    line("  Everything below would report source=RULE — which is a valid demo, just not a live one.\n");
+    line("");
+    line(setupHint().split("\n").map((l) => "  " + l).join("\n"));
+    line("");
   }
 
   const [tape] = await db.select().from(tapes).orderBy(desc(tapes.createdAt)).limit(1);

@@ -51,6 +51,7 @@ npm run e2e           # full pipeline against a real Postgres db, no mocks —
 npm run ui:demo       # the five-minute demo, driven through a real browser as all three
                       # roles; asserts against the database, not against the screen
 npm run ai:check      # calls the model for real and reports live-vs-fallback per job
+npm run ai:models     # list the models the configured key can reach
 npm run demo:reviewed # build the second tape: a queue worked all the way to sign-off
                       # through the real service paths — 1107 audit events, and it verifies
 
@@ -90,6 +91,18 @@ prompt hash, and logged (model, tokens, latency, confidence) into the same hash-
 audit log. Every AI feature has a deterministic fallback and the system is fully
 demonstrable with `AI_ENABLED=false`.
 
+Because the AI only advises, **the provider is configuration rather than architecture**.
+Groq, Google Gemini, OpenRouter, Cerebras and a local Ollama all work through one
+OpenAI-shaped transport, and every one of them has a free tier that needs no credit card —
+**this project has no paid dependency at all.** Anthropic is supported too, and is the
+only option that costs money.
+
+```bash
+AI_ENABLED="true"  AI_PROVIDER="groq"  AI_API_KEY="..."   # ~30 seconds at console.groq.com/keys
+npm run ai:models   # what that key can actually reach
+npm run ai:check    # call all four jobs for real; reports live-vs-fallback per job
+```
+
 **Two hashes answer two different questions** (ADR 0003):
 
 - A SHA-256 **hash chain over audit events** proves the *history* is intact — edit or
@@ -109,7 +122,8 @@ Full rationale for each decision is in `docs/adr/0001` through `0007`.
 
 Next.js 15 (App Router, Server Actions) · TypeScript strict · Drizzle ORM over
 `node-postgres` (ADR 0006) · PostgreSQL 16 · Zod · Decimal.js · Tailwind CSS v4 ·
-Vitest. Self-documenting OpenAPI 3.1 spec at `/api/openapi`, generated programmatically
+Vitest. Every piece of it, including hosting (Vercel), the database (Neon) and the
+model provider, runs on a free tier. Self-documenting OpenAPI 3.1 spec at `/api/openapi`, generated programmatically
 from the same source-of-truth objects the app runs on (`docs` page renders it).
 
 ## Repo map

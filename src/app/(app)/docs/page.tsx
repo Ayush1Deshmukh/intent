@@ -1,4 +1,5 @@
 import { buildOpenApi } from "@/lib/openapi";
+import { provider } from "@/lib/ai/client";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,7 @@ export default function DocsPage() {
         <div className="flex gap-2 pt-1">
           <a className="btn btn-sm no-underline" href="/api/openapi" target="_blank" rel="noreferrer">Raw OpenAPI JSON</a>
         </div>
+        <AiStatus />
       </header>
 
       {spec.tags.map((tag) => {
@@ -130,6 +132,43 @@ export default function DocsPage() {
           </table>
         </div>
       </section>
+    </div>
+  );
+}
+
+/**
+ * What is actually answering the AI endpoints on this instance, stated plainly.
+ *
+ * Worth its own panel because the honest answer is sometimes "nothing" — every AI
+ * feature has a deterministic twin, and an instance with no key configured is a
+ * working demo rather than a broken one. A reader should not have to guess which
+ * of the two they are looking at.
+ */
+function AiStatus() {
+  const p = provider();
+  return (
+    <div className="card p-4 flex flex-col gap-2 mt-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="eyebrow">AI on this instance</span>
+        {p ? (
+          <>
+            <span className="chip bg-accentsoft text-accent">{p.label}</span>
+            <span className="chip bg-surface2 text-muted mono">{p.model}</span>
+          </>
+        ) : (
+          <span className="chip bg-surface2 text-muted">deterministic only — no provider configured</span>
+        )}
+      </div>
+      <p className="text-sm text-ink2 max-w-prose">
+        {p
+          ? "Every response from this provider is validated against a schema before the application will accept it, and lands in the proposals table — never directly on a loan record. If a call fails or the key runs out, the deterministic twin answers instead and the UI says so."
+          : "Explain, propose, cluster and rule-authoring are all running their deterministic twins. Nothing is degraded except the prose: exceptions are still explained, fixes are still proposed, and root-cause clusters are still found — by rules rather than by a model, and labelled as such."}
+      </p>
+      <p className="text-xs text-muted">
+        The provider is configuration, not architecture (ADR 0002). Groq, Google Gemini,
+        OpenRouter, Cerebras and a local Ollama all work, and all of them have a free tier —
+        this project has no paid dependency.
+      </p>
     </div>
   );
 }

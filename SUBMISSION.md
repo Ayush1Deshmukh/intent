@@ -153,6 +153,13 @@ accepts it; a *different* person approves it; only then does a loan record chang
 API or fell back. Successful responses are cached by prompt hash, so the demo is instant
 and works offline.
 
+**The provider is pluggable, and every supported one is free.** Because the AI only
+advises, which model answers is a configuration line: Groq, Google Gemini, OpenRouter,
+Cerebras and a local Ollama all work through one OpenAI-shaped transport
+(`src/lib/ai/providers.ts`), and none of them needs a credit card. Anthropic is supported
+and is the only paid option. **This project has no paid dependency** — hosting, database
+and model all sit on free tiers, so a judge can stand the whole thing up themselves.
+
 **Agentic coding discipline:** [`docs/AI_DEVELOPMENT_LOG.md`](docs/AI_DEVELOPMENT_LOG.md).
 It covers the standing brief in [`AGENTS.md`](AGENTS.md) that encodes five invariants as
 prohibitions, where the assistant was a genuine multiplier, the review apparatus that
@@ -179,6 +186,14 @@ AI silently unreachable during the demo with no error anywhere.
   rather than the screen. The script and the rehearsal cannot drift apart.
 
 ---
+
+## Cost
+
+Zero, deliberately, and it is a design property rather than a corner cut. Vercel hobby,
+Neon free, and any of the free model providers. The AI is advisory (ADR 0002), which is
+what makes the provider swappable in the first place — and every AI feature has a
+deterministic twin, so even a rate-limited free key degrades the prose rather than the
+product.
 
 ## What we deliberately did not build
 

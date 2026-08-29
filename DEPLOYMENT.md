@@ -52,13 +52,34 @@ deploys to work):
 | `AUTH_SECRET` | a fresh random string — `openssl rand -hex 32` |
 | `DEMO_RESET_TOKEN` | any string; you'll need it to reset the demo |
 | `MAX_TAPE_ROWS` | `5000` |
-| `AI_ENABLED` | `true` only if you're also setting the key below |
-| `ANTHROPIC_API_KEY` | your key, or leave unset |
-| `ANTHROPIC_MODEL` | `claude-opus-5` |
+| `AI_ENABLED` | `true` only if you're also setting a provider below |
+| `AI_PROVIDER` | `groq`, `gemini`, `openrouter`, `cerebras`, or leave unset |
+| `AI_API_KEY` | that provider's key |
+| `AI_MODEL` | optional — each provider has a current default |
 
-Before deploying with AI on, run `npm run ai:check` locally against the same key. It calls
-all four jobs for real and prints, per job, whether it reached the API or fell back — which
-is the only way to tell the difference, because a failed call degrades silently by design.
+**Every provider above has a free tier that needs no credit card**, so the whole
+deployment costs nothing:
+
+| Provider | Key from | Free tier |
+|---|---|---|
+| Groq | [console.groq.com/keys](https://console.groq.com/keys) | ~30 req/min, 14,400/day |
+| Google Gemini | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | daily caps vary by model |
+| OpenRouter | [openrouter.ai/keys](https://openrouter.ai/keys) | models with a `:free` suffix |
+| Cerebras | [cloud.cerebras.ai](https://cloud.cerebras.ai/) | free tier, no card |
+
+Groq is the quickest to set up — an email address and about thirty seconds.
+`ollama` also works and is completely free, but it runs locally and cannot be reached
+from a serverless deployment, so it is a local-demo option only.
+
+Before deploying with AI on, run it locally against the same key:
+
+```bash
+npm run ai:models    # what that key can actually reach — model names churn
+npm run ai:check     # calls all four jobs for real, reports live-vs-fallback per job
+```
+
+That second one matters: a failed call degrades to the deterministic path **by design**,
+so a broken key looks exactly like a working instance with AI switched off.
 
 **Do not reuse the development `AUTH_SECRET`.** It signs session JWTs.
 
