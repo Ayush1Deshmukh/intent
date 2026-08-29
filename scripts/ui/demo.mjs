@@ -276,6 +276,18 @@ const tp = await rev.locator("body").innerText();
 tp.includes(victim) ? ok(`the divergent loan is named on screen: ${victim}`) : bad("the failing loan is not named");
 /intact/i.test(tp) ? ok("the audit chain is still intact — an audit log alone would have missed this") : note("chain status not shown alongside");
 
+/* ================================== 11  PUT IT BACK, AND PROVE IT */
+step("11  restore — the demo has to be runnable twice");
+run("npx", ["tsx", "--env-file=.env", "scripts/tamper.ts", "--restore"]);
+await rev.goto(`${BASE}/tapes/${tapeId}`, { waitUntil: "networkidle" });
+await rev.waitForTimeout(1000);
+await rev.locator('button:has-text("Check integrity")').click();
+await rev.waitForTimeout(9000);
+const back = await rev.locator("body").innerText();
+/unbroken chain/i.test(back) && !/\bdiverge/i.test(back)
+  ? ok("the tape verifies again — the tamper demo is repeatable, and this run left nothing broken")
+  : bad("restore did not bring the tape back:\n" + back.slice(0, 600));
+
 await b.close();
 console.log("\nCONSOLE ERRORS: " + errs.length);
 [...new Set(errs)].slice(0, 10).forEach((e) => console.log("   ! " + e.slice(0, 200)));
