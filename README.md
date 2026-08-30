@@ -69,7 +69,7 @@ npm run ui:record     # records that same flow to a video file, to narrate over
 npm run ai:check      # calls the model for real and reports live-vs-fallback per job
 npm run ai:models     # list the models the configured key can reach
 npm run demo:reviewed # build the second tape: a queue worked all the way to sign-off
-                      # through the real service paths — 1107 audit events, and it verifies
+                      # through the real service paths — 1108 audit events, and it verifies
 npm run setup         # migrations + seed; safe to run repeatedly
 
 npm run tamper -- LN-000117 --balance 1   # corrupt one verified record directly in SQL,

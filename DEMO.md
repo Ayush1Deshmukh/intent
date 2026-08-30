@@ -191,13 +191,13 @@ For the demo, switch to the pre-reviewed tape here (see *Two tapes*, below). The
 
 ## 8 · The artifact · 30s
 
-448 loans sealed into the verified ledger — 500 rows in, 52 excluded — each with its
+442 loans sealed into the verified ledger — 500 rows in, 58 excluded — each with its
 payload, its lineage back to the source file and row, the reviewer who signed it, and its
 hash. One Merkle root over all of them, signed.
 
 **Click "Check integrity".**
 
-> Chain intact over 1107 events, and all 448 sealed records still match the attested root.
+> Chain intact over 1108 events, and all 442 sealed records still match the attested root.
 > That root is recomputed from the live rows right now — it never reads the stored hash,
 > because a stored hash is a copy of the claim, not evidence for it.
 
@@ -276,10 +276,10 @@ npm run demo:reviewed
 That builds **Q2 2026 acquisition tape — signed off**: the same 500 rows, worked all the
 way through. And it is worth saying exactly how, because it is not a shortcut:
 
-> This one has already been through review — 84 exceptions repaired under maker-checker,
-> 57 waived with written reasons, 52 loans excluded. Not by editing the database: every
+> This one has already been through review — 79 exceptions repaired under maker-checker,
+> 62 waived with written reasons, 58 loans excluded. Not by editing the database: every
 > one of those went through the same service calls you just watched me click, by the same
-> two people, writing 1107 audit events. That is why it verifies.
+> two people, writing 1108 audit events. That is why it verifies.
 
 Then say the honest thing:
 

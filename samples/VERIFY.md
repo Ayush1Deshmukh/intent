@@ -1,6 +1,6 @@
 # Verifying Q2 2026 acquisition tape — signed off without this system
 
-Exported 2026-08-30T18:12:30.156Z by consumer@intain.demo.
+Exported 2026-08-30T19:55:15.707Z by consumer@intain.demo.
 
 ## 1. The event chain
 
@@ -30,20 +30,20 @@ equal `merkleRoot`.
   "attested": true,
   "chain": {
     "ok": true,
-    "eventsChecked": 1106,
+    "eventsChecked": 1108,
     "firstBadSeq": null,
     "reason": null
   },
   "data": {
     "ok": true,
-    "attestedRoot": "5f7afc59d9fb8086d738edd2e91cc045ff10efa2f513aadd1071e8a4452be629",
-    "recomputedRoot": "5f7afc59d9fb8086d738edd2e91cc045ff10efa2f513aadd1071e8a4452be629",
-    "recordCount": 448,
+    "attestedRoot": "5997ea939edd676217a665eab31e8a454dea72ea2b1e11f081ba54fd0f2a5782",
+    "recomputedRoot": "5997ea939edd676217a665eab31e8a454dea72ea2b1e11f081ba54fd0f2a5782",
+    "recordCount": 442,
     "divergences": []
   },
-  "checkedAt": "2026-08-30T18:12:29.794Z"
+  "checkedAt": "2026-08-30T19:55:15.670Z"
 }
 ```
 
-Chain: intact over 1106 events
+Chain: intact over 1108 events
 Data: matches the attested root
