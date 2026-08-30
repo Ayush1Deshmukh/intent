@@ -65,6 +65,7 @@ npm run e2e           # full pipeline against a real Postgres db, no mocks —
                       # -> attest -> verify, plus two live tamper scenarios
 npm run ui:demo       # the five-minute demo, driven through a real browser as all three
                       # roles; asserts against the database, not against the screen
+npm run ui:record     # records that same flow to a video file, to narrate over
 npm run ai:check      # calls the model for real and reports live-vs-fallback per job
 npm run ai:models     # list the models the configured key can reach
 npm run demo:reviewed # build the second tape: a queue worked all the way to sign-off

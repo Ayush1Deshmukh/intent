@@ -18,6 +18,7 @@
     "ui:demo": "node --env-file=.env scripts/ui/demo.mjs",
     "ui:smoke": "node scripts/ui/smoke.mjs",
     "ui:shots": "node scripts/ui/shots.mjs",
+    "ui:record": "node --env-file=.env scripts/ui/record.mjs",
     "ai:check": "tsx --env-file=.env scripts/ai-check.ts",
     "ai:models": "tsx --env-file=.env scripts/ai-models.ts",
     "tamper": "tsx --env-file=.env scripts/tamper.ts",

@@ -4,6 +4,20 @@ Five minutes, ten beats, three people. Every beat below is asserted by
 `npm run ui:demo`, which drives this exact sequence through a real browser and fails if
 any of it stops working — so the script and the rehearsal cannot drift apart.
 
+## Recording it
+
+```bash
+npm run ai:check        # warm the model cache, so nothing stalls on camera
+npm run ui:record       # ~4 minutes → artifacts/video/verified-tape-demo.webm
+```
+
+That drives the real application through the same ten beats below, in the same order,
+at a pace you can talk over. It has no audio and makes no argument — narrate it from this
+document, or use it as b-roll and present live. It restores the record it tampers with,
+so the instance is left usable.
+
+`PACE=1.5 npm run ui:record` slows every dwell if you speak deliberately.
+
 ## Before you start
 
 ```bash

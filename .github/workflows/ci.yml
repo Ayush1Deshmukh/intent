@@ -1,0 +1,78 @@
+# Everything a reviewer would run, run on every push.
+#
+# The e2e job deliberately uses a real Postgres rather than a mock: the thing under test
+# is whether the bytes in the database still hash to the signed root, and a mock cannot
+# answer that. The model is forced off there, because the promise is that this all works
+# without a key — and because a CI run should not depend on a rate limit.
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  check:
+    name: lint · types · unit tests · build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm test
+      - name: Build
+        run: npm run build
+        env:
+          # env.ts validates at import; nothing connects during a build
+          DATABASE_URL: postgresql://build:build@localhost:5432/build
+          AUTH_SECRET: ci-placeholder-secret-0123456789abcdef
+
+  pipeline:
+    name: end-to-end against a real database
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: verified_tape
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/verified_tape
+      AUTH_SECRET: ci-placeholder-secret-0123456789abcdef
+      AI_ENABLED: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Fixtures are deterministic
+        run: |
+          npm run gen:tape
+          git diff --exit-code -- fixtures docs/defects.md \
+            || (echo "::error::gen:tape is not deterministic — fixtures changed" && exit 1)
+      - run: npm run dry-run
+      - name: Migrate and seed
+        run: npx tsx scripts/setup.ts
+      - name: Full pipeline, no mocks, plus the tamper checks
+        run: npm run e2e
+
+  image:
+    name: a fresh clone builds the image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: docker compose build
+        run: docker compose build
