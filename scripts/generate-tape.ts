@@ -58,6 +58,7 @@ const D = {
   impossibleDate:  S(8, 12, 41),     // 31/02, 31/04 — invalid under either ordering
   missingLoanId:   S(37, 4, 113),    // no identifier at all
   termJunk:        S(21, 3, 157),    // 600-month term
+  statusJunk:      S(53, 5, 107),    // a status vocabulary this system does not know
   dpdNegative:     S(27, 2, 173),    // negative days past due
   balanceAsText:   S(33, 3, 149),    // "see servicing file" in a money column
   maturityJunk:    S(15, 4, 121),    // maturity date that cannot be read at all
@@ -144,6 +145,8 @@ for (const l of loans) {
   if (D.paymentBroken.has(i))    { l.payment = Math.round(l.payment * between(1.05, 1.12) * 100) / 100; l.defects.push("payment-not-amortizing"); }
   if (D.dpdVsStatus.has(i))      { l.dpd = pick([15, 30, 45, 60, 75]); l.status = "Current"; l.defects.push("dpd-vs-status"); }
   if (D.paidOffBalance.has(i))   { l.status = "Paid Off"; l.defects.push("paidoff-with-balance"); }
+  // a servicer whose own vocabulary never got mapped: not invalid to them, unreadable here
+  if (D.statusJunk.has(i))       { l.status = pick(["Active", "In Repayment", "30-DAY", "Closed-Paid", "REO"]); l.defects.push("status-unrecognised"); }
   if (D.unknownServicer.has(i))  { l.servicer = pick(BAD_SERVICERS); l.defects.push("unknown-servicer"); }
   if (D.staleAsOf.has(i))        { l.asOf = new Date(REPORT_DATE.getTime() - intBetween(120, 400) * 86400000); l.defects.push("stale-as-of"); }
   if (D.placeholderDate.has(i))  { l.orig = new Date(Date.UTC(1900, 0, 1)); l.defects.push("placeholder-date"); }

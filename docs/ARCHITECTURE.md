@@ -79,7 +79,7 @@ field is a bug, not a rounding artifact.
 
 ## 3 · Validation engine
 
-**28 rules stored as data, not code** — a JSON expression DSL with a specified grammar,
+**29 rules stored as data, not code** — a JSON expression DSL with a specified grammar,
 interpreted by `src/lib/rules/engine.ts`. Rules are rows: they can be listed, versioned,
 authored from a sentence, and reasoned about without a deploy.
 [ADR 0001](adr/0001-rules-as-data.md)
@@ -96,7 +96,7 @@ Three semantics do most of the work, and each was wrong once before it was writt
 3. **Tape-scoped rules run in a second pass**, after every record is normalized — that is
    the only point at which "this column is empty across 22% of the file" can be evaluated.
 
-The result is **209 exceptions from 500 rows**: a number a person can work, not 500 rows of
+The result is **216 exceptions from 500 rows**: a number a person can work, not 500 rows of
 noise. `fixtures/clean_tape_50.csv` must always produce zero — it is the canary, and it is
 the single most effective test in the project.
 

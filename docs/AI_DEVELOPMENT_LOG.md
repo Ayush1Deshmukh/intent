@@ -79,7 +79,7 @@ is what the model proposed first, and it is wrong — it makes `03/04/2024` and
 
 ### The rules catalogue
 
-28 rules as data, not code ([ADR 0001](adr/0001-rules-as-data.md)). Once the DSL grammar
+29 rules as data, not code ([ADR 0001](adr/0001-rules-as-data.md)). Once the DSL grammar
 was fixed by hand, generating rules against it was mechanical, and the assistant produced
 most of the catalogue from a description of each check plus the grammar. This is the
 clearest case in the project of AI value: a well-specified, highly repetitive, easily
@@ -268,7 +268,7 @@ so the counts cannot be wrong — the model is never trusted with a row. It is a
 smaller prompt (~30 lines instead of 120), which is what lets it run inside a free tier's
 per-minute token budget at all.
 
-The result is better analysis *and* true numbers: on the demo tape it collapses 209
+The result is better analysis *and* true numbers: on the demo tape it collapses 216
 exceptions into 7 causes, the largest holding 59 across three different rules — a merge
 the per-rule grouping could not have found.
 
@@ -284,7 +284,7 @@ evaluated with ordinary comparison.
 in the demo tape have a blank credit score (a planted defect, `fico-blank`). Under naive
 comparison a single blank FICO fires four separate range rules, and the exception count
 becomes noise — which destroys the product, because the entire value proposition is that
-209 exceptions is a number a person can act on.
+216 exceptions is a number a person can act on.
 
 **The fix.** Null propagates to false through every comparison; missing values are
 detected only by rules that say `isNull` explicitly. This is now semantics rule 1 in
@@ -376,8 +376,8 @@ exceptions. It is a 50-row clean tape, and it is the single most effective test 
 project — every false positive a rule change introduces shows up as a non-zero count on
 data that is known-good. `npm run dry-run` checks it in about a second.
 
-**The pinned defect count.** The demo tape produces exactly 209 exceptions, from 27
-of the 28 rules in the catalogue. That number is asserted in `scripts/e2e.ts` and in the browser test. It is a
+**The pinned defect count.** The demo tape produces exactly 216 exceptions, from 28
+of the 29 rules in the catalogue. That number is asserted in `scripts/e2e.ts` and in the browser test. It is a
 coarse instrument, but any rule change that alters behaviour anywhere moves it, and then
 a human has to decide whether the move was intended.
 

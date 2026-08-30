@@ -59,7 +59,7 @@ These are not style preferences. Breaking one breaks the product's central claim
 ```
 npm run dev            # localhost:3000
 npm run gen:tape       # regenerate fixtures + docs/defects.md from one source of truth
-npm run db:seed        # users, servicers, 28 rules
+npm run db:seed        # users, servicers, 29 rules
 npm run test           # unit: coercion, rules, hashing, policy
 npm run e2e            # full pipeline against a real database, including the tamper checks
 npm run tamper -- LN-000117 --balance 1     # the demo's last thirty seconds

@@ -64,15 +64,33 @@ const DOC_STATUS: Record<string, string> = {
   missing:"MISSING", none:"MISSING", n:"MISSING", no:"MISSING", "not available":"MISSING", unavailable:"MISSING",
 };
 
-function mapEnum(raw: string, table: Record<string, string>, name: string, fallback: string): CoercionResult<string> {
+/**
+ * Map a source value onto a canonical enum.
+ *
+ * `fallback` is the bucket for a value the table does not know. Whether having one is
+ * right depends entirely on the field, and getting that wrong is subtle:
+ *
+ *   - `loanType` has an open vocabulary and a genuine catch-all. A product this system
+ *     has never heard of really is OTHER, and nothing downstream reasons about the
+ *     difference. A fallback is honest.
+ *
+ *   - `paymentStatus` does not. UNKNOWN is a real status meaning "the source told us it
+ *     did not know", and using it for "we could not read this" collapses two different
+ *     facts into one value — after which every delinquency rule quietly stops applying
+ *     to that loan and nothing anywhere says so. That is precisely the silent
+ *     substitution this system exists to prevent, so there is no fallback: an
+ *     unrecognised status fails, the field goes null, and FMT-006 reports it.
+ */
+function mapEnum(raw: string, table: Record<string, string>, name: string, fallback: string | null): CoercionResult<string> {
   const s = (raw ?? "").trim();
   if (!s) return { ok: true, value: null, coercion: "" };
   const key = s.toLowerCase().replace(/[\s_-]+/g, " ").trim();
   const hit = table[key] ?? table[key.replace(/ /g, "_")];
   if (hit) return { ok: true, value: hit, coercion: hit === s ? "" : `enum.${name}` };
+  if (fallback === null) return failed(`unrecognised ${name} "${raw}"`);
   return { ok: true, value: fallback, coercion: `enum.${name}_unknown` };
 }
 
-export const coercePaymentStatus = (raw: string) => mapEnum(raw, PAY_STATUS, "payment_status", "UNKNOWN");
+export const coercePaymentStatus = (raw: string) => mapEnum(raw, PAY_STATUS, "payment_status", null);
 export const coerceLoanType      = (raw: string) => mapEnum(raw, LOAN_TYPE, "loan_type", "OTHER");
 export const coerceDocStatus     = (raw: string) => mapEnum(raw, DOC_STATUS, "document_status", "UNKNOWN");

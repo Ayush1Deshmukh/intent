@@ -3,7 +3,7 @@ import { coerceDate, detectDateFormat, excelSerialToIso } from "@/lib/coerce/dat
 import { coerceMoney } from "@/lib/coerce/money";
 import { coerceRate, detectRateScale } from "@/lib/coerce/rate";
 import { coerceState } from "@/lib/coerce/state";
-import { coerceZip, coerceInt, coerceText, coerceTimestamp, coercePaymentStatus } from "@/lib/coerce/misc";
+import { coerceZip, coerceInt, coerceText, coerceTimestamp, coercePaymentStatus, coerceLoanType } from "@/lib/coerce/misc";
 
 describe("dates", () => {
   it("parses ISO", () => expect(coerceDate("2024-03-31").value).toBe("2024-03-31"));
@@ -87,6 +87,22 @@ describe("state, zip, int, text", () => {
   it("parses epoch timestamps", () => expect(coerceTimestamp("1712000000").value).toMatch(/^2024-/));
   it("maps payment status synonyms", () => {
     expect(coercePaymentStatus("Paid Off").value).toBe("PAID_OFF");
-    expect(coercePaymentStatus("30 days late").value).toBe("UNKNOWN");
+    expect(coercePaymentStatus("past due").value).toBe("DELINQUENT");
+    expect(coercePaymentStatus("").value).toBeNull();
+  });
+
+  it("refuses to invent a payment status it does not recognise", () => {
+    // UNKNOWN means the source said it did not know. Using it for "we could not read
+    // this" collapses two different facts, and every delinquency rule then silently
+    // stops applying to the loan. So an unrecognised status fails and FMT-006 reports it.
+    for (const junk of ["30 days late", "In Repayment", "Active", "ZZZ"]) {
+      const r = coercePaymentStatus(junk);
+      expect(r.ok, junk).toBe(false);
+      expect(r.value, junk).toBeNull();
+    }
+  });
+
+  it("still buckets an unknown loan type, because that vocabulary is genuinely open", () => {
+    expect(coerceLoanType("Reverse mortgage").value).toBe("OTHER");
   });
 });

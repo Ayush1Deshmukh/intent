@@ -58,10 +58,10 @@ second, no database required.
 
 ### 2 · Backend validation and exception handling
 
-**28 rules as data, not code** — a JSON DSL with a specified grammar, interpreted by
+**29 rules as data, not code** — a JSON DSL with a specified grammar, interpreted by
 `src/lib/rules/engine.ts`. [ADR 0001](docs/adr/0001-rules-as-data.md)
 
-The number that matters is **209 exceptions from 500 rows**, and it is a number a person
+The number that matters is **216 exceptions from 500 rows**, and it is a number a person
 can act on because of three semantics that are easy to get wrong:
 
 - **Null is not a violation.** Any comparison touching a null is false; missing values are

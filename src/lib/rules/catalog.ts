@@ -91,6 +91,13 @@ export const RULE_CATALOG: RuleDef[] = [
     expression: { op: "or", args: [{ op: "parseError", field: "borrowerZip" }, { op: "matches", field: "borrowerZip", pattern: "^\\d{5}(-\\d{4})?$", negate: true }] },
     repairHint: "zip.pad",
   },
+  {
+    code: "FMT-006", name: "Unrecognised payment status", category: "format", severity: "WARNING",
+    scope: "record", field: "paymentStatus",
+    expected: "one of CURRENT, DELINQUENT, DEFAULT, PAID_OFF, FORECLOSURE, UNKNOWN",
+    description: "The payment status is not a value this system recognises. It is left null rather than bucketed as UNKNOWN, because UNKNOWN means the source said so — and quietly conflating the two would stop every delinquency rule applying to this loan with nothing to show for it.",
+    expression: { op: "parseError", field: "paymentStatus" },
+  },
 
   /* ---------------------------------------------------------------- range */
   {

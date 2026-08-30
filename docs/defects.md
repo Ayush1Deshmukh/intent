@@ -40,6 +40,7 @@ so this file cannot drift from the fixtures. Regenerate with `npm run gen:tape`.
 | `fico-impossible` | 6 | LN-000030, LN-000101, LN-000172, LN-000243 |
 | `dates-transposed` | 5 | LN-000026, LN-000119, LN-000212, LN-000305 |
 | `unknown-servicer` | 5 | LN-000044, LN-000133, LN-000222, LN-000311 |
+| `status-unrecognised` | 5 | LN-000054, LN-000161, LN-000268, LN-000375 |
 | `maturity-unreadable` | 4 | LN-000016, LN-000137, LN-000258, LN-000379 |
 | `placeholder-date` | 4 | LN-000032, LN-000133, LN-000234, LN-000335 |
 | `loan-id-missing` | 4 | , , ,  |

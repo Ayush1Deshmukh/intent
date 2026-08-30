@@ -63,6 +63,13 @@ describe("format", () => {
   it("FMT-003", () => expect(fire([withErr("currentBalance", "not a number")])).toContain("FMT-003"));
   it("FMT-004 invalid state", () => expect(fire([base({ borrowerState: "XX" })])).toContain("FMT-004"));
   it("FMT-005 malformed zip", () => expect(fire([base({ borrowerZip: "9021" })])).toContain("FMT-005"));
+  it("FMT-006 unrecognised payment status", () =>
+    expect(fire([withErr("paymentStatus", 'unrecognised payment_status "In Repayment"')])).toContain("FMT-006"));
+  it("FMT-006 accepts every documented status", () => {
+    for (const ok of ["CURRENT", "DELINQUENT", "DEFAULT", "PAID_OFF", "FORECLOSURE", "UNKNOWN"]) {
+      expect(fire([base({ paymentStatus: ok })]), ok).not.toContain("FMT-006");
+    }
+  });
 });
 
 describe("range", () => {
@@ -130,8 +137,8 @@ describe("catalog integrity", () => {
       expect(r.expected.length, r.code).toBeGreaterThan(3);
     }
   });
-  it("has 28 rules across 8 families", () => {
-    expect(RULE_CATALOG).toHaveLength(28);
+  it("has 29 rules across 8 families", () => {
+    expect(RULE_CATALOG).toHaveLength(29);
     expect(new Set(RULE_CATALOG.map((r) => r.category)).size).toBe(8);
   });
   it("every rule in the catalog is reachable by code", () => {

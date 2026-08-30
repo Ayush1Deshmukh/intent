@@ -45,7 +45,7 @@ Demo logins (created by `setup`, password `demo1234` for all three):
 
 Upload `fixtures/loan_tape.csv`, `fixtures/servicer_update.csv`, and
 `fixtures/document_manifest.csv` together as one tape to see the full defect set
-(209 exceptions, firing 27 of the 28 rules, including 27 cross-source conflicts). `fixtures/clean_tape_50.csv`
+(216 exceptions, firing 28 of the 29 rules, including 27 cross-source conflicts). `fixtures/clean_tape_50.csv`
 is the zero-exception canary.
 
 One click back to a clean demo state at any time:
@@ -153,7 +153,7 @@ from the same source-of-truth objects the app runs on (`docs` page renders it).
 src/lib/canonical.ts      deterministic JSON serialization for hashing
 src/lib/hash.ts           record/event hashing, Merkle tree + proofs
 src/lib/coerce/           column-aware normalization (date/money/rate/state)
-src/lib/rules/            the DSL, the 28-rule catalog, the interpreter
+src/lib/rules/            the DSL, the 29-rule catalog, the interpreter
 src/lib/ingest/           parsing, 4-pass header mapping, the pipeline
 src/lib/service/          ingest / review / attest / preview — the write paths
 src/lib/audit.ts          hash-chained event log + verifyChain()

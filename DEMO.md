@@ -76,13 +76,13 @@ You arrive on the **mapping screen**. Point at two things:
 **Click Confirm.** It takes about twenty seconds; talk through the next paragraph while
 it runs.
 
-## 2 · 209 exceptions, and a number you can act on · 30s
+## 2 · 216 exceptions, and a number you can act on · 30s
 
 **Operator → the tape overview.**
 
-500 rows. 209 exceptions. 68.4% of rows clean. 149 gating exceptions blocking sign-off.
+500 rows. 216 exceptions. 68.4% of rows clean. 149 gating exceptions blocking sign-off.
 
-The number to defend is **209**, not 500:
+The number to defend is **216**, not 500:
 
 > A blank credit score is one finding, not four. Null is not a violation in this engine —
 > a missing value is only reported by a rule that asks for it explicitly. And a row with a
@@ -94,7 +94,7 @@ The number to defend is **209**, not 500:
 
 **Operator → Exception queue → "Group by root cause".**
 
-209 exceptions collapse into a handful of causes. Open the top one:
+216 exceptions collapse into a handful of causes. Open the top one:
 
 > **Dates arrived in two different orderings.** The origination column contains both DD/MM
 > and MM/DD values. Some rows cannot be read at all; others were read the wrong way round,

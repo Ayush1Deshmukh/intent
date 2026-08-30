@@ -98,10 +98,10 @@ await op.goto(`${BASE}/tapes/${tapeId}`, { waitUntil: "networkidle" });
 await op.waitForTimeout(1200);
 await shot(op, "02-overview");
 const ov = await op.locator("body").innerText();
-/\b209\b/.test(ov) ? ok("209 exceptions on the overview") : bad("exception count wrong:\n" + ov.slice(0, 400));
+/\b216\b/.test(ov) ? ok("216 exceptions on the overview") : bad("exception count wrong:\n" + ov.slice(0, 400));
 
 /* ============================================ 2  ROOT-CAUSE CLUSTERING */
-step("2  operator: group 209 exceptions by root cause");
+step("2  operator: group 216 exceptions by root cause");
 await op.goto(`${BASE}/tapes/${tapeId}/exceptions`, { waitUntil: "networkidle" });
 await op.waitForTimeout(2000);
 await op.locator('button:has-text("Group by root cause")').click();

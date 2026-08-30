@@ -92,7 +92,7 @@ await hold(3800);                       // the counters animate up
 await reveal(760, 8);
 await hold(2600);                       // the three zones
 
-beat(3, "209 exceptions collapse into a handful of root causes");
+beat(3, "216 exceptions collapse into a handful of root causes");
 await p.goto(`${BASE}/tapes/${workingTape}/exceptions`, { waitUntil: "networkidle" });
 await hold(2600);
 await p.locator('button:has-text("Group by root cause")').click();

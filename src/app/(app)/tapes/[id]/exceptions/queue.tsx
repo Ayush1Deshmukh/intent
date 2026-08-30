@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { Subject, subjectLabel } from "@/components/ui";
 
 type Row = {
-  id: string; loanId: string | null; rowNumber: number | null; field: string | null; observed: string | null;
+  id: string; loanId: string | null; borrowerId: string | null; rowNumber: number | null;
+  field: string | null; observed: string | null;
   expected: string | null; severity: string; status: string; clusterKey: string | null;
   ruleCode: string; ruleName: string; ruleDescription: string; category: string;
 };
@@ -13,7 +14,9 @@ type Cluster = { key: string; label: string; rootCause: string; count: number; s
 type Explain = { whatTheRuleChecks: string; likelyCause: string; downstreamRisk: string; source: string; model: string | null };
 type Proposal = { id: string; field: string; fromValue: string | null; toValue: string | null;
   rationale: string; confidence: number; source: string; model: string | null;
-  evidence: { label: string; value: string }[] | null; status: string };
+  evidence: { label: string; value: string }[] | null; status: string;
+  promptHash?: string | null; tokensIn?: number | null; tokensOut?: number | null;
+  latencyMs?: number | null; createdAt?: string | null };
 
 const SEVERITIES = ["BLOCKER", "CRITICAL", "WARNING", "INFO"];
 const STATUSES = ["OPEN", "PENDING_APPROVAL", "RESOLVED", "WAIVED", "REJECTED"];
@@ -28,12 +31,21 @@ export default function Queue({ rows, clusters, canAct, canWaive, canExclude }: 
   const [cluster, setCluster] = useState<string | null>(null);
   const [open, setOpen] = useState<Row | null>(null);
   const [showClusters, setShowClusters] = useState(false);
+  const [q, setQ] = useState("");
 
-  const filtered = useMemo(() => rows.filter((r) =>
-    (sev.length === 0 || sev.includes(r.severity)) &&
-    (status.length === 0 || status.includes(r.status)) &&
-    (!rule || r.ruleCode === rule) &&
-    (!cluster || r.clusterKey === cluster)), [rows, sev, status, rule, cluster]);
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return rows.filter((r) =>
+      (sev.length === 0 || sev.includes(r.severity)) &&
+      (status.length === 0 || status.includes(r.status)) &&
+      (!rule || r.ruleCode === rule) &&
+      (!cluster || r.clusterKey === cluster) &&
+      (!needle
+        || (r.loanId ?? "").toLowerCase().includes(needle)
+        || (r.borrowerId ?? "").toLowerCase().includes(needle)
+        || (r.field ?? "").toLowerCase().includes(needle)
+        || (r.observed ?? "").toLowerCase().includes(needle)));
+  }, [rows, sev, status, rule, cluster, q]);
 
   const ruleCodes = useMemo(() => [...new Set(rows.map((r) => r.ruleCode))].sort(), [rows]);
   const toggle = (list: string[], set: (v: string[]) => void, v: string) =>
@@ -60,6 +72,11 @@ export default function Queue({ rows, clusters, canAct, canWaive, canExclude }: 
             </button>
           ))}
         </div>
+        <label className="flex items-center gap-2">
+          <span className="eyebrow">Find</span>
+          <input value={q} onChange={(e) => setQ(e.target.value)} className="w-52"
+            placeholder="Loan or borrower id…" aria-label="Search by loan or borrower id" />
+        </label>
         <label className="flex items-center gap-2">
           <span className="eyebrow">Rule</span>
           <select value={rule} onChange={(e) => setRule(e.target.value)} className="w-32">
@@ -176,6 +193,8 @@ function Drawer({ row, canAct, canWaive, canExclude, onClose }: {
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
   const [reason, setReason] = useState("");
+  const [editing, setEditing] = useState<string | null>(null);   // the edited value, while editing
+  const [showMeta, setShowMeta] = useState(false);
 
   async function call(what: string, url: string, body?: unknown) {
     setBusy(what); setMsg(null);
@@ -263,6 +282,34 @@ function Drawer({ row, canAct, canWaive, canExclude, onClose }: {
 
             <p className="text-sm text-ink2 leading-relaxed">{proposal.rationale}</p>
 
+            {/* Required AI control: the metadata behind the suggestion, on the record and
+                on the screen. Collapsed because a reviewer does not need it to decide —
+                but they must be able to get at it without leaving the page. */}
+            <div className="flex flex-col gap-1.5">
+              <button type="button" className="text-[0.7rem] text-muted text-left underline decoration-dotted"
+                onClick={() => setShowMeta((v) => !v)}>
+                {showMeta ? "Hide" : "Show"} what produced this
+              </button>
+              {showMeta ? (
+                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[0.68rem] fadein">
+                  <dt className="text-muted">Produced by</dt>
+                  <dd className="mono">{proposal.source === "AI" ? (proposal.model ?? "model") : proposal.source === "RULE" ? "deterministic repair, no model" : "a person"}</dd>
+                  <dt className="text-muted">Confidence</dt>
+                  <dd className="mono tnum">{proposal.confidence.toFixed(2)}</dd>
+                  {proposal.promptHash ? (<><dt className="text-muted">Prompt hash</dt>
+                    <dd className="mono break-all">{proposal.promptHash.slice(0, 32)}…</dd></>) : null}
+                  {proposal.tokensIn != null ? (<><dt className="text-muted">Tokens</dt>
+                    <dd className="mono tnum">{proposal.tokensIn} in · {proposal.tokensOut ?? 0} out</dd></>) : null}
+                  {proposal.latencyMs != null ? (<><dt className="text-muted">Latency</dt>
+                    <dd className="mono tnum">{proposal.latencyMs} ms</dd></>) : null}
+                  {proposal.createdAt ? (<><dt className="text-muted">At</dt>
+                    <dd className="mono">{new Date(proposal.createdAt).toLocaleString()}</dd></>) : null}
+                  <dt className="text-muted">Recorded</dt>
+                  <dd>in the audit chain, whatever is decided next</dd>
+                </dl>
+              ) : null}
+            </div>
+
             {proposal.evidence?.length ? (
               <div className="flex flex-col gap-1">
                 <span className="eyebrow">Evidence</span>
@@ -278,18 +325,54 @@ function Drawer({ row, canAct, canWaive, canExclude, onClose }: {
             </div>
 
             {canAct && proposal.status === "DRAFT" ? (
-              <div className="flex gap-2 flex-wrap">
-                <button className="btn btn-sm btn-primary" disabled={busy !== null}
-                  onClick={async () => {
-                    const r = await call("accept", `/api/v1/proposals/${proposal.id}/decision`, { action: "accept", reason });
-                    if (r) setMsg({ tone: "ok", text: "Accepted. It is now a pending change waiting for a Reviewer." });
-                  }}>Accept</button>
-                <button className="btn btn-sm" disabled={busy !== null || reason.trim().length < 4}
-                  onClick={async () => {
-                    const r = await call("reject", `/api/v1/proposals/${proposal.id}/decision`, { action: "reject", reason });
-                    if (r) { setProposal(null); setMsg({ tone: "ok", text: "Rejected. The exception is open again." }); }
-                  }}>Reject (needs a reason)</button>
-              </div>
+              editing === null ? (
+                <div className="flex gap-2 flex-wrap">
+                  <button className="btn btn-sm btn-primary" disabled={busy !== null}
+                    onClick={async () => {
+                      const r = await call("accept", `/api/v1/proposals/${proposal.id}/decision`, { action: "accept", reason });
+                      if (r) setMsg({ tone: "ok", text: "Accepted. It is now a pending change waiting for a Reviewer." });
+                    }}>Accept</button>
+                  <button className="btn btn-sm" disabled={busy !== null}
+                    onClick={() => setEditing(proposal.toValue ?? "")}>Edit the value</button>
+                  <button className="btn btn-sm" disabled={busy !== null || reason.trim().length < 4}
+                    onClick={async () => {
+                      const r = await call("reject", `/api/v1/proposals/${proposal.id}/decision`, { action: "reject", reason });
+                      if (r) { setProposal(null); setMsg({ tone: "ok", text: "Rejected. The exception is open again." }); }
+                    }}>Reject (needs a reason)</button>
+                </div>
+              ) : (
+                /* Editing does not overwrite the suggestion — it files a new one, by hand,
+                   alongside it. Both stay in the audit trail, so what the model proposed and
+                   what the person actually chose are separately answerable afterwards. */
+                <div className="card p-3 flex flex-col gap-2 bg-bg">
+                  <span className="eyebrow">Your value for {proposal.field}</span>
+                  <input value={editing} onChange={(e) => setEditing(e.target.value)}
+                    placeholder="leave empty to set the field to null" autoFocus />
+                  <p className="text-[0.68rem] text-muted">
+                    This files a separate proposal marked <strong>entered by hand</strong>. The model&rsquo;s
+                    suggestion is kept and rejected on the record, so the audit trail shows both.
+                  </p>
+                  <div className="flex gap-2">
+                    <button className="btn btn-sm btn-primary" disabled={busy !== null}
+                      onClick={async () => {
+                        const mine = await call("edit", `/api/v1/exceptions/${row.id}/proposals`, {
+                          mode: "manual", field: proposal.field, toValue: editing,
+                          rationale: reason.trim() ||
+                            `Entered by hand in place of the ${proposal.source === "AI" ? "model's" : "rule-based"} suggestion of ${proposal.toValue ?? "empty"}.`,
+                        });
+                        if (!mine) return;
+                        await call("reject", `/api/v1/proposals/${proposal.id}/decision`, {
+                          action: "reject", reason: "Superseded by a value entered by hand.",
+                        });
+                        setEditing(null);
+                        setProposal({ ...mine, status: "DRAFT" });
+                        setMsg({ tone: "ok", text: "Your value is filed. Accept it to send it for approval." });
+                      }}>Use my value</button>
+                    <button className="btn btn-sm" disabled={busy !== null}
+                      onClick={() => setEditing(null)}>Cancel</button>
+                  </div>
+                </div>
+              )
             ) : null}
           </div>
         ) : null}

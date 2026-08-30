@@ -14,7 +14,7 @@ export default async function ExceptionsPage({ params }: { params: Promise<{ id:
   const session = (await getSession())!;
   const { id } = await params;
 
-  const rows = await db.select({ exc: exceptions, rule: rules, loanId: loanRecords.loanId, rowNumber: rawRecords.rowNumber })
+  const rows = await db.select({ exc: exceptions, rule: rules, loanId: loanRecords.loanId, borrowerId: loanRecords.borrowerId, rowNumber: rawRecords.rowNumber })
     .from(exceptions).innerJoin(rules, eq(rules.id, exceptions.ruleId))
     .leftJoin(loanRecords, eq(loanRecords.id, exceptions.recordId))
     .leftJoin(rawRecords, eq(rawRecords.id, loanRecords.rawRecordId))
@@ -41,7 +41,8 @@ export default async function ExceptionsPage({ params }: { params: Promise<{ id:
         clusters={clusters.map((c) => ({ key: c.key, label: c.label, rootCause: c.rootCause,
           count: c.exceptionIds.length, suggestedAction: c.suggestedAction, source: c.source, confidence: c.confidence }))}
         rows={rows.map((r) => ({
-          id: r.exc.id, loanId: r.loanId, rowNumber: r.rowNumber, field: r.exc.field, observed: r.exc.observed,
+          id: r.exc.id, loanId: r.loanId, borrowerId: r.borrowerId, rowNumber: r.rowNumber,
+          field: r.exc.field, observed: r.exc.observed,
           expected: r.exc.expected, severity: r.exc.severity, status: r.exc.status,
           clusterKey: r.exc.clusterKey, ruleCode: r.rule.code, ruleName: r.rule.name,
           ruleDescription: r.rule.description, category: r.rule.category,

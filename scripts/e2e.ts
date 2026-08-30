@@ -64,7 +64,7 @@ async function main() {
   console.log(`  records ${res.records}  exceptions ${res.exceptions}  conflicts ${res.conflicts}  clean ${res.cleanRecords}`);
   console.log(`  column formats`, JSON.stringify(res.hints));
   check(res.records === 500, "500 canonical records written to the working zone");
-  check(res.exceptions === 209, `209 exceptions raised (got ${res.exceptions})`);
+  check(res.exceptions === 216, `216 exceptions raised (got ${res.exceptions})`);
   check(res.suppressed === 11, `${res.suppressed} dependent rules suppressed because their input was already flagged`);
   check(res.unmapped.length === 1, `1 unmapped column flagged: ${res.unmapped.join(",")}`);
 
