@@ -17,10 +17,12 @@
     "dry-run": "tsx scripts/dry-run.ts",
     "ui:smoke": "node scripts/ui/smoke.mjs",
     "ui:flow": "node scripts/ui/flow.mjs",
-    "ui:demo": "node scripts/ui/demo.mjs",
+    "ui:demo": "node --env-file=.env scripts/ui/demo.mjs",
     "ai:check": "tsx --env-file=.env scripts/ai-check.ts",
     "demo:reviewed": "tsx --env-file=.env scripts/seed-review.ts",
-    "ai:models": "tsx --env-file=.env scripts/ai-models.ts"
+    "ai:models": "tsx --env-file=.env scripts/ai-models.ts",
+    "setup": "tsx --env-file=.env scripts/setup.ts",
+    "build:setup": "esbuild scripts/setup.ts --bundle --platform=node --target=node22 --format=cjs --outfile=.next/standalone/setup.cjs --external:pg-native --external:cloudflare:sockets --log-level=warning"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",

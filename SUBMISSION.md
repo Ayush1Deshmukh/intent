@@ -14,6 +14,7 @@ on trust, which is the same principle the product is built on.
 | How it was built | [`docs/AI_DEVELOPMENT_LOG.md`](docs/AI_DEVELOPMENT_LOG.md) — agentic coding, including what was rejected |
 | Why it is shaped this way | [`docs/adr/`](docs/adr/) — seven decisions, each with the alternatives that lost |
 | Prove it works | `npm run test && npm run e2e && npm run ui:demo` |
+| Run it with no accounts | `docker compose up --build` → http://localhost:3000 |
 
 ---
 
@@ -179,8 +180,10 @@ AI silently unreachable during the demo with no error anywhere.
 - The export bundle ships `VERIFY.md`: the exact hash formula, the leaf ordering, and the
   export's own verification result, so a third party can check the tape **without this
   system**.
-- **Deployment:** [`DEPLOYMENT.md`](DEPLOYMENT.md) — Vercel + Neon, about fifteen minutes,
-  no paid plan.
+- **Deployment:** two paths, both free — [`DEPLOYMENT.md`](DEPLOYMENT.md). `docker compose
+  up --build` gives a complete working instance with no accounts at all: the container
+  applies its own migrations and seeds itself, so there is no install step to get wrong.
+  Vercel + Neon is the hosted path, about fifteen minutes.
 - **Demo readiness:** [`DEMO.md`](DEMO.md) is the script, and `npm run ui:demo` drives that
   exact sequence through a real browser as all three roles, asserting against the database
   rather than the screen. The script and the rehearsal cannot drift apart.

@@ -1,0 +1,60 @@
+# Verified Tape, whole, in one command:
+#
+#   docker compose up --build
+#
+# Then open http://localhost:3000 and click any of the three roles to sign in.
+# The app applies its own schema and seeds itself on first start, so there is no
+# separate install step and no hosting account involved.
+#
+# AI is optional. Everything works with it switched off — every AI feature has a
+# deterministic twin. To turn it on, put a free key in .env (see .env.example):
+#   AI_ENABLED=true  AI_PROVIDER=groq  AI_API_KEY=gsk_...
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: verified_tape
+    # Published so the tools that need a real connection — npm run ui:demo,
+    # tamper, e2e — can point at this database from the host. 5434 rather than
+    # 5432 so it does not collide with a Postgres you already run.
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d verified_tape"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/verified_tape
+      # Fine for a local demo. Generate a real one for anything else:
+      #   openssl rand -hex 32
+      AUTH_SECRET: ${AUTH_SECRET:-local-demo-secret-change-me-0123456789abcdef}
+      DEMO_RESET_TOKEN: ${DEMO_RESET_TOKEN:-demo-reset}
+      MAX_TAPE_ROWS: ${MAX_TAPE_ROWS:-5000}
+      # Set to true to have the container also build the pre-reviewed tape that
+      # beats 7 and 8 of DEMO.md use. Adds about a minute to the first start.
+      SEED_REVIEWED_TAPE: ${SEED_REVIEWED_TAPE:-false}
+      # Optional, and free — see .env.example
+      AI_ENABLED: ${AI_ENABLED:-false}
+      AI_PROVIDER: ${AI_PROVIDER:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:

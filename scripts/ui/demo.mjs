@@ -11,6 +11,7 @@
 import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";
 import { mkdir } from "node:fs/promises";
+import pg from "pg";
 
 const BASE = process.env.BASE_URL || "http://localhost:3000";
 const SHOTS = process.env.SHOTS_DIR || "artifacts/demo";
@@ -38,9 +39,25 @@ async function login(email) {
   return p;
 }
 
-const sql = (q) =>
-  execFileSync("docker", ["exec", "verified-tape-db", "psql", "-U", "postgres", "-d", "verified_tape", "-tAc", q],
-    { encoding: "utf8" }).trim();
+/**
+ * Half of what this script asserts is "the screen says X" — which is worth very
+ * little on its own. The other half reads the database directly and checks the
+ * claim underneath: that accepting a proposal did NOT change the loan, that the
+ * exclusion really was written, that the tampered value really did change. Hence
+ * a real connection rather than shelling out to a container-specific psql.
+ *
+ * Run with:  node --env-file=.env scripts/ui/demo.mjs
+ */
+if (!process.env.DATABASE_URL) {
+  console.error("DATABASE_URL is not set. Run: node --env-file=.env scripts/ui/demo.mjs");
+  process.exit(1);
+}
+const pgc = new pg.Client({ connectionString: process.env.DATABASE_URL });
+await pgc.connect();
+const sql = async (q) => {
+  const r = await pgc.query(q);
+  return r.rows.length ? String(Object.values(r.rows[0])[0] ?? "") : "";
+};
 
 const run = (cmd, args) => execFileSync(cmd, args, { encoding: "utf8", stdio: "pipe" });
 
@@ -51,7 +68,19 @@ await op.goto(BASE + "/tapes", { waitUntil: "networkidle" });
 await op.locator('button:has-text("demo"),button:has-text("Demo"),button:has-text("Load")').first().click();
 await op.waitForURL(/\/mapping/, { timeout: 90000 }).catch(() => {});
 const tapeId = op.url().match(/tapes\/([^/]+)/)?.[1];
-if (!tapeId) { bad("never reached a tape"); process.exit(1); }
+if (!tapeId) {
+  // Almost always one of two things, and neither is worth ten minutes of guessing:
+  // the app is pointed at a different database than this script, or its connection
+  // pool is stale because the database container was recreated underneath it.
+  bad("never reached a tape");
+  note(`stuck at ${op.url()}`);
+  note("page said: " + (await op.locator("body").innerText()).slice(0, 300).replace(/\n/g, " | "));
+  note(`this script is using ${process.env.DATABASE_URL?.replace(/:[^:@]*@/, ":***@")}`);
+  note("if the app runs in docker, check `docker compose logs app` and restart it:");
+  note("  docker compose restart app");
+  await pgc.end(); await b.close();
+  process.exit(1);
+}
 note("tape " + tapeId);
 await op.waitForTimeout(1500);
 await shot(op, "01-mapping");
@@ -132,7 +161,7 @@ const pr = await drawer.innerText();
 
 // the value that is about to change, straight from the database
 const loanId = (pr.match(/LN-\d+/) || [])[0];
-const before = loanId ? sql(`select payment_amount from loan_records where loan_id='${loanId}' and tape_id='${tapeId}'`) : "";
+const before = loanId ? await sql(`select payment_amount from loan_records where loan_id='${loanId}' and tape_id='${tapeId}'`) : "";
 note(`loan ${loanId} paymentAmount before = ${before}`);
 
 await op.locator('aside button:has-text("Accept")').click();
@@ -140,7 +169,7 @@ await op.waitForTimeout(4000);
 const acc = await drawer.innerText();
 /pending change waiting for a Reviewer/i.test(acc) ? ok("accept confirms it is now pending") : bad("accept feedback missing:\n" + acc.slice(-400));
 
-const after = loanId ? sql(`select payment_amount from loan_records where loan_id='${loanId}' and tape_id='${tapeId}'`) : "";
+const after = loanId ? await sql(`select payment_amount from loan_records where loan_id='${loanId}' and tape_id='${tapeId}'`) : "";
 before === after
   ? ok(`the loan record did NOT change on accept (${before} still)`)
   : bad(`ACCEPT MUTATED THE RECORD: ${before} -> ${after} — the central claim is broken`);
@@ -168,11 +197,11 @@ loanId && rq.includes(loanId) ? ok(`the accepted change for ${loanId} is waiting
 await rev.locator('button:has-text("Approve and apply")').first().click();
 await rev.waitForTimeout(5000);
 await shot(rev, "10-approved");
-const applied = loanId ? sql(`select payment_amount from loan_records where loan_id='${loanId}' and tape_id='${tapeId}'`) : "";
+const applied = loanId ? await sql(`select payment_amount from loan_records where loan_id='${loanId}' and tape_id='${tapeId}'`) : "";
 applied !== before
   ? ok(`approval applied the change: ${before} -> ${applied}`)
   : bad("approval did not change the record");
-const ver = loanId ? sql(`select version from loan_records where loan_id='${loanId}' and tape_id='${tapeId}'`) : "";
+const ver = loanId ? await sql(`select version from loan_records where loan_id='${loanId}' and tape_id='${tapeId}'`) : "";
 Number(ver) >= 2 ? ok(`the record version was bumped to v${ver}`) : bad("version not bumped");
 
 /* ============================================ 6  SIGN-OFF IS BLOCKED */
@@ -211,9 +240,9 @@ await rev.waitForTimeout(4000);
 const exText = await revDrawer.innerText();
 /Excluded/i.test(exText) ? ok(`the loan was dropped from the tape: ${victimLoan}`) : bad("exclude gave no confirmation:\n" + exText.slice(-400));
 
-const status = victimLoan ? sql(`select verification_status from loan_records where loan_id='${victimLoan}' and tape_id='${tapeId}'`) : "";
+const status = victimLoan ? await sql(`select verification_status from loan_records where loan_id='${victimLoan}' and tape_id='${tapeId}'`) : "";
 status === "REJECTED" ? ok("the excluded loan is marked REJECTED in the database") : bad("excluded loan status is " + status);
-const evt = sql(`select count(*) from audit_events where action='LOAN_EXCLUDED' and tape_id='${tapeId}'`);
+const evt = await sql(`select count(*) from audit_events where action='LOAN_EXCLUDED' and tape_id='${tapeId}'`);
 Number(evt) > 0 ? ok("the exclusion is in the audit chain with its reason") : bad("no LOAN_EXCLUDED event was written");
 
 // The remaining ~150 are cleared the same way, in bulk, because a browser cannot
@@ -229,9 +258,9 @@ await rev.waitForTimeout(25000);
 await shot(rev, "12-attested");
 const done = await rev.locator("body").innerText();
 /VERIFIED/i.test(done) ? ok("the tape is signed off and marked verified") : bad("tape not verified after sign-off:\n" + done.slice(0, 500));
-const sealed = sql(`select count(*) from verified_records where tape_id='${tapeId}'`);
+const sealed = await sql(`select count(*) from verified_records where tape_id='${tapeId}'`);
 Number(sealed) > 0 ? ok(`${sealed} records sealed into the verified ledger`) : bad("nothing was sealed");
-const root = sql(`select merkle_root from attestations where tape_id='${tapeId}'`);
+const root = await sql(`select merkle_root from attestations where tape_id='${tapeId}'`);
 root.length === 64 ? ok("merkle root " + root.slice(0, 16) + "…") : bad("no merkle root");
 
 /* ================================================= 8  INTEGRITY PASSES */
@@ -263,8 +292,8 @@ decideRes.status() === 403 ? ok("consumer POST to a write endpoint is 403 at the
 
 /* ============================================ 10  TAMPER, LIVE */
 step("10  someone edits the database directly — the app names it");
-const victim = sql(`select loan_id from verified_records where tape_id='${tapeId}' order by loan_id limit 1`);
-sql(`update loan_records set current_balance = current_balance + 1 where loan_id='${victim}' and tape_id='${tapeId}'`);
+const victim = await sql(`select loan_id from verified_records where tape_id='${tapeId}' order by loan_id limit 1`);
+await sql(`update loan_records set current_balance = current_balance + 1 where loan_id='${victim}' and tape_id='${tapeId}'`);
 note(`edited ${victim}.currentBalance directly in SQL`);
 await rev.goto(`${BASE}/tapes/${tapeId}`, { waitUntil: "networkidle" });
 await rev.waitForTimeout(1000);
@@ -288,8 +317,9 @@ const back = await rev.locator("body").innerText();
   ? ok("the tape verifies again — the tamper demo is repeatable, and this run left nothing broken")
   : bad("restore did not bring the tape back:\n" + back.slice(0, 600));
 
+await pgc.end();
 await b.close();
 console.log("\nCONSOLE ERRORS: " + errs.length);
 [...new Set(errs)].slice(0, 10).forEach((e) => console.log("   ! " + e.slice(0, 200)));
-console.log(fails.length ? `\n${fails.length} FAILURE(S)\n` + fails.map((f) => "  - " + f).join("\n") : "\nDEMO REHEARSAL PASSED — all ten beats work on camera");
+console.log(fails.length ? `\n${fails.length} FAILURE(S)\n` + fails.map((f) => "  - " + f).join("\n") : "\nDEMO REHEARSAL PASSED — every beat works on camera, and the database is back where it started");
 process.exit(fails.length ? 1 : 0);

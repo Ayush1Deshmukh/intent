@@ -29,8 +29,15 @@ import {
 import { attestTape, verifyTape } from "@/lib/service/attest";
 import type { Session } from "@/lib/auth";
 
-const ROOT = join(import.meta.dirname ?? process.cwd(), "..");
-const fx = (n: string) => ({ filename: n, buffer: readFileSync(join(ROOT, "fixtures", n)) });
+/**
+ * Where the fixture CSVs live. `import.meta.dirname` is empty once this file is
+ * bundled to CommonJS for the container image, so the working directory is the
+ * fallback — which is correct both there (/app/fixtures) and when run with tsx
+ * from the repository root. FIXTURES_DIR overrides both.
+ */
+const FIXTURES = process.env.FIXTURES_DIR
+  || (import.meta.dirname ? join(import.meta.dirname, "..", "fixtures") : join(process.cwd(), "fixtures"));
+const fx = (n: string) => ({ filename: n, buffer: readFileSync(join(FIXTURES, n)) });
 const NAME = process.env.REVIEWED_TAPE_NAME || "Q2 2026 acquisition tape — signed off";
 
 /**
@@ -102,16 +109,55 @@ export async function resolveAllExceptions(op: Session, rev: Session, tapeId: st
   return tally;
 }
 
-async function main() {
+async function sessions() {
   const all = await db.select().from(users);
   const operator = all.find((u) => u.role === "DATA_OPERATOR");
   const reviewer = all.find((u) => u.role === "REVIEWER");
-  if (!operator || !reviewer) {
-    console.error("No demo users. Run `npm run db:seed` first.");
-    process.exit(1);
+  if (!operator || !reviewer) throw new Error("No demo users. Seed the reference data first.");
+  return {
+    op: { userId: operator.id, email: operator.email, name: operator.name, role: "DATA_OPERATOR" } as Session,
+    rev: { userId: reviewer.id, email: reviewer.email, name: reviewer.name, role: "REVIEWER" } as Session,
+  };
+}
+
+/**
+ * Ingest the fixtures, work the whole queue, and sign off — the callable form,
+ * used by `npm run demo:reviewed` and by the container's setup step.
+ */
+export async function buildReviewedTape(log: (s: string) => void = () => {}) {
+  const { op, rev } = await sessions();
+
+  const ing = await ingestFiles(op, NAME, [
+    { kind: "LOAN_TAPE", ...fx("loan_tape.csv") },
+    { kind: "SERVICER_UPDATE", ...fx("servicer_update.csv") },
+    { kind: "DOCUMENT_MANIFEST", ...fx("document_manifest.csv") },
+  ], 5000);
+  log(`tape ${ing.tapeId}  ${ing.rowCount} rows`);
+
+  const res = await normalizeAndValidate(op, ing.tapeId, "2026-07-31");
+  log(`${res.records} records, ${res.exceptions} exceptions, ${res.conflicts} conflicts`);
+
+  const tally = await resolveAllExceptions(op, rev, ing.tapeId);
+  log(`repaired ${tally.repaired}  waived ${tally.waived}  excluded ${tally.excluded}`);
+
+  const counts = await tapeCounts(ing.tapeId);
+  if (counts.openGating > 0) {
+    throw new Error(`${counts.openGating} gating exceptions could not be resolved; cannot sign off`);
   }
-  const op: Session = { userId: operator.id, email: operator.email, name: operator.name, role: "DATA_OPERATOR" };
-  const rev: Session = { userId: reviewer.id, email: reviewer.email, name: reviewer.name, role: "REVIEWER" };
+
+  const att = await attestTape(rev, ing.tapeId);
+  const dropped = await db.select({ id: loanRecords.id }).from(loanRecords)
+    .where(and(eq(loanRecords.tapeId, ing.tapeId), eq(loanRecords.verificationStatus, "REJECTED")));
+  const v = await verifyTape(ing.tapeId);
+
+  return {
+    tapeId: ing.tapeId, tally, sealed: att.recordCount, excluded: dropped.length,
+    merkleRoot: att.merkleRoot, events: v.chain.eventsChecked, verifies: v.ok,
+  };
+}
+
+async function main() {
+  const { op, rev } = await sessions();
 
   if (TAPE_FLAG) {
     console.log(`\n--- working the open queue on ${TAPE_FLAG} ---`);
@@ -121,49 +167,15 @@ async function main() {
     process.exit(c.openGating === 0 ? 0 : 1);
   }
 
-  console.log("\n--- ingest ---");
-  const ing = await ingestFiles(op, NAME, [
-    { kind: "LOAN_TAPE", ...fx("loan_tape.csv") },
-    { kind: "SERVICER_UPDATE", ...fx("servicer_update.csv") },
-    { kind: "DOCUMENT_MANIFEST", ...fx("document_manifest.csv") },
-  ], 5000);
-  console.log(`  tape ${ing.tapeId}  ${ing.rowCount} rows`);
+  console.log("\n--- ingest, review and sign off ---");
+  const r = await buildReviewedTape((m) => console.log("  " + m));
+  console.log(`\n  ${r.sealed} loans sealed, ${r.excluded} excluded`);
+  console.log(`  merkle root ${r.merkleRoot}`);
+  console.log(`  chain intact over ${r.events} events`);
+  console.log(`  data  ${r.verifies ? "matches the attestation" : "DIVERGES"}`);
 
-  const res = await normalizeAndValidate(op, ing.tapeId, "2026-07-31");
-  console.log(`  ${res.records} records, ${res.exceptions} exceptions, ${res.conflicts} conflicts`);
-
-  console.log("\n--- review, through the real service paths ---");
-  const tally = await resolveAllExceptions(op, rev, ing.tapeId);
-  console.log(`  repaired via maker-checker  ${tally.repaired}`);
-  console.log(`  waived with a reason        ${tally.waived}`);
-  console.log(`  loans excluded              ${tally.excluded}`);
-  if (tally.skipped) console.log(`  tape-level, still open      ${tally.skipped}`);
-
-  const counts = await tapeCounts(ing.tapeId);
-  console.log(`  gating still open           ${counts.openGating}`);
-
-  if (counts.openGating > 0) {
-    const stuck = await db.select({ code: rules.code, sev: exceptions.severity, rec: exceptions.recordId })
-      .from(exceptions).innerJoin(rules, eq(rules.id, exceptions.ruleId))
-      .where(and(eq(exceptions.tapeId, ing.tapeId), inArray(exceptions.severity, ["BLOCKER", "CRITICAL"]),
-                 inArray(exceptions.status, ["OPEN", "PENDING_APPROVAL"]))).limit(10);
-    console.error("\n  Cannot sign off. Still gating:", stuck);
-    process.exit(1);
-  }
-
-  console.log("\n--- sign off ---");
-  const att = await attestTape(rev, ing.tapeId);
-  const dropped = await db.select({ id: loanRecords.id }).from(loanRecords)
-    .where(and(eq(loanRecords.tapeId, ing.tapeId), eq(loanRecords.verificationStatus, "REJECTED")));
-  console.log(`  ${att.recordCount} loans sealed, ${dropped.length} excluded`);
-  console.log(`  merkle root ${att.merkleRoot}`);
-
-  const v = await verifyTape(ing.tapeId);
-  console.log(`  chain ${v.chain.ok ? "intact" : "BROKEN"} over ${v.chain.eventsChecked} events`);
-  console.log(`  data  ${v.data.ok ? "matches the attestation" : "DIVERGES"}`);
-
-  if (!v.ok) { console.error("\n  The reviewed tape does not verify. That is a bug."); process.exit(1); }
-  console.log(`\nReady. Open /tapes/${ing.tapeId} — signed off, and it verifies.\n`);
+  if (!r.verifies) { console.error("\n  The reviewed tape does not verify. That is a bug."); process.exit(1); }
+  console.log(`\nReady. Open /tapes/${r.tapeId} — signed off, and it verifies.\n`);
   process.exit(0);
 }
 

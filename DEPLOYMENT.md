@@ -1,4 +1,37 @@
-# Deployment — Vercel + Neon
+# Deployment
+
+Two ways, both free. **If you have no hosting accounts, use the first one** — it needs
+nothing but Docker, and a judge can run it on their own machine.
+
+## Self-hosted, one command
+
+```bash
+docker compose up --build
+```
+
+`http://localhost:3000`. The container applies its own migrations and seeds itself, so
+there is nothing else to run. Optional extras:
+
+```bash
+SEED_REVIEWED_TAPE=true docker compose up --build     # also build the signed-off tape
+AI_ENABLED=true AI_PROVIDER=groq AI_API_KEY=gsk_... docker compose up --build
+```
+
+The database is published on `127.0.0.1:5434`, so the tools that need a real connection
+work against it from the host:
+
+```bash
+npm run ui:demo                            # the whole demo, driven through a browser
+npm run tamper -- LN-000001 --balance 1    # then hit "Check integrity" in the UI
+npm run tamper -- --restore
+```
+
+To put it on a server, any host that runs Docker will do — Fly.io, Railway and Render all
+have free or near-free tiers, and the image needs only `DATABASE_URL` and `AUTH_SECRET`.
+
+---
+
+# Hosted — Vercel + Neon
 
 Roughly fifteen minutes. Nothing here needs a paid plan.
 
@@ -14,9 +47,12 @@ postgresql://USER:PASSWORD@ep-xxx-pooler.REGION.aws.neon.tech/neondb?sslmode=req
 Apply the schema and seed it from your machine, pointing at Neon:
 
 ```bash
-DATABASE_URL="<neon-pooled-url>" npx drizzle-kit push
-DATABASE_URL="<neon-pooled-url>" npx tsx scripts/seed.ts
+DATABASE_URL="<neon-pooled-url>" npx tsx scripts/setup.ts
 ```
+
+That applies every migration in `drizzle/` that has not run yet, records it in a
+`_migrations` table, and seeds the reference data. It is idempotent — run it again after
+any schema change and it applies only what is new.
 
 `seed.ts` creates the three demo users, six servicers and 28 rules. The demo tape itself
 is loaded through the UI in one click, so nothing else has to be prepared.
@@ -25,7 +61,7 @@ Optionally, seed the second tape — the one that has already been through revie
 beats 7 and 8 of the demo use:
 
 ```bash
-DATABASE_URL="<neon-pooled-url>" npx tsx scripts/seed-review.ts
+DATABASE_URL="<neon-pooled-url>" SEED_REVIEWED_TAPE=true npx tsx scripts/setup.ts
 ```
 
 It takes a couple of minutes against Neon, because it works all 209 exceptions through the

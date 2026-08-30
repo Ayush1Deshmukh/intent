@@ -12,14 +12,28 @@ trusting this database**.
 
 ## Quickstart
 
+Everything, in one command — database included, no accounts, nothing to configure:
+
+```bash
+docker compose up --build
+```
+
+Then open **http://localhost:3000** and click any of the three roles to sign in. The
+container applies its own migrations and seeds itself on first start, so there is no
+separate install step. Add `SEED_REVIEWED_TAPE=true` to also build the already-reviewed
+tape that beats 7 and 8 of [`DEMO.md`](DEMO.md) use.
+
+Or run it directly, against your own Postgres:
+
 ```bash
 npm install
-cp .env.example .env               # fill in DATABASE_URL at minimum
-npm run db:push                    # apply the schema (drizzle-kit push)
-npm run db:seed                    # 3 demo users, 6 servicers, 28 rules
-npm run gen:tape                   # regenerate the demo fixtures + docs/defects.md
+cp .env.example .env               # set DATABASE_URL at minimum
+npm run setup                      # migrations + seed, idempotent
 npm run dev                        # http://localhost:3000
 ```
+
+`npm run gen:tape` regenerates the demo fixtures and `docs/defects.md` from one seeded
+source, if you want to change the planted defects.
 
 Demo logins (seeded by `db:seed`, password `demo1234` for all three):
 
@@ -54,6 +68,7 @@ npm run ai:check      # calls the model for real and reports live-vs-fallback pe
 npm run ai:models     # list the models the configured key can reach
 npm run demo:reviewed # build the second tape: a queue worked all the way to sign-off
                       # through the real service paths — 1107 audit events, and it verifies
+npm run setup         # migrations + seed; safe to run repeatedly
 
 npm run tamper -- LN-000117 --balance 1   # corrupt one verified record directly in SQL,
                                           # then hit /verify and watch it get named
