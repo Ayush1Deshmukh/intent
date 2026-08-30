@@ -150,8 +150,9 @@ accepts it; a *different* person approves it; only then does a loan record chang
   `AI_ENABLED=false`. The provenance chip in the UI always says which one you are looking
   at — a graceful fallback and a silent failure otherwise look identical.
 
-`npm run ai:check` calls the model for real and reports, per job, whether it reached the
-API or fell back. Successful responses are cached by prompt hash, so the demo is instant
+**Verified live**, not just written: all four jobs reach Groq (`openai/gpt-oss-120b`, free
+tier) and pass their Zod gate. `npm run ai:check` calls the model for real and reports, per
+job, whether it reached the API or fell back. Successful responses are cached by prompt hash, so the demo is instant
 and works offline.
 
 **The provider is pluggable, and every supported one is free.** Because the AI only
@@ -164,9 +165,11 @@ and model all sit on free tiers, so a judge can stand the whole thing up themsel
 **Agentic coding discipline:** [`docs/AI_DEVELOPMENT_LOG.md`](docs/AI_DEVELOPMENT_LOG.md).
 It covers the standing brief in [`AGENTS.md`](AGENTS.md) that encodes five invariants as
 prohibitions, where the assistant was a genuine multiplier, the review apparatus that
-carried the load — and seven **rejected outputs** with the reasoning that overrode them,
+carried the load — and eight **rejected outputs** with the reasoning that overrode them —
 including one (`temperature: 0` against a model that rejects it) that would have made the
-AI silently unreachable during the demo with no error anywhere.
+AI silently unreachable during the demo with no error anywhere, and one where the
+clustering read better than its replacement while reporting a 45-loan problem as a
+5-loan problem.
 
 ### 6 · API design, deployment, and demo readiness
 

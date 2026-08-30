@@ -144,7 +144,38 @@ tiers, and the deterministic twin still answers when a free-tier key is rate-lim
 `tests/providers.test.ts` pins every branch of the resolution, because it is config logic
 that fails silently in exactly the way this section is about.
 
-### 3.2 Null treated as a rule violation
+### 3.2 Clustering that was confidently, readably wrong
+
+**What it wrote.** The root-cause clustering sent the model a 120-row sample of the
+exception queue and used the row assignments it returned as the cluster membership.
+
+**Why it is wrong.** A cause that actually affected 45 loans was reported as affecting
+5 — because 5 was all the model had been shown. Every label was sensible, every
+suggested action was reasonable, and the counts were nonsense.
+
+**Why this is the worst failure in this document.** The other entries produce something
+visibly broken, or something that fails closed. This produced a screen that looked
+better than the deterministic version it replaced. The exception count is the number a
+reviewer prioritises by; a cluster labelled "5 exceptions" gets worked after one
+labelled "16", and the 45-loan problem sits untouched. Fluent output with wrong numbers
+is not a degraded answer, it is an actively misleading one, and nothing in the response
+would have told anyone.
+
+**The fix was a division of labour, not a bigger sample.** The model is now handed
+*buckets* the deterministic engine has already formed, each with an exact count, and
+asked only to merge and name them. Membership is expanded from those buckets afterwards,
+so the counts cannot be wrong — the model is never trusted with a row. It is also a much
+smaller prompt (~30 lines instead of 120), which is what lets it run inside a free tier's
+per-minute token budget at all.
+
+The result is better analysis *and* true numbers: on the demo tape it collapses 209
+exceptions into 7 causes, the largest holding 59 across three different rules — a merge
+the per-rule grouping could not have found.
+
+**The generalisable rule:** give the model the judgement and keep the arithmetic. That
+is the same sentence as ADR 0002, arrived at a second time from a different direction.
+
+### 3.3 Null treated as a rule violation
 
 **What it wrote.** Range rules of the form `currentBalance < 0` and `creditScore < 300`,
 evaluated with ordinary comparison.
@@ -159,7 +190,7 @@ becomes noise — which destroys the product, because the entire value propositi
 detected only by rules that say `isNull` explicitly. This is now semantics rule 1 in
 `AGENTS.md` and is asserted in `tests/rules.test.ts`.
 
-### 3.3 Cascading exceptions from one bad input
+### 3.4 Cascading exceptions from one bad input
 
 **What it wrote.** Every rule evaluated independently against every row.
 
@@ -173,7 +204,7 @@ it is an echo — and worse, the deterministic repair attached to it would propo
 skipped when a field it reads already carries a gating exception. This is semantics rule
 2. It is also the difference between an exception queue and a wall of noise.
 
-### 3.4 A hash chain that proves the wrong thing
+### 3.5 A hash chain that proves the wrong thing
 
 **What it wrote.** `verifyTape()` compared each verified record's stored `recordHash`
 against the Merkle root.
@@ -193,7 +224,7 @@ The specification was underdetermined and the model resolved the ambiguity in th
 direction that made the code simpler. That is the characteristic failure of agentic
 coding, and the only defence is a human who knows what the artifact is *for*.
 
-### 3.5 A UI label that quietly asserted something false
+### 3.6 A UI label that quietly asserted something false
 
 **What it wrote.** The exception queue and the reviewer queue both rendered
 `loanId ?? "tape-level"`.
@@ -209,7 +240,7 @@ approved a proposal and then asserted the resulting change **in SQL**; the loan 
 back empty, which was the thread to pull. Fixed in commit `d6c115c` with a `Subject`
 component that names all three cases.
 
-### 3.6 Role refusal rendered as a server crash
+### 3.7 Role refusal rendered as a server crash
 
 **What it wrote.** `requireRolePage()` threw on an unauthorized role. The check was
 correct and failed closed — the security behaviour was right.
@@ -222,7 +253,7 @@ five-minute demo, worse than no feature.
 **The fix.** A `/denied` page naming the attempted action, the role held, and the role
 required — commit `19dd4c8`. It now demonstrates the RBAC rather than hiding it.
 
-### 3.7 Two smaller ones, for completeness
+### 3.8 Two smaller ones, for completeness
 
 - **A `lint` script that did not lint.** `package.json` carried a `lint` entry that hung
   on an interactive prompt; ESLint was never actually installed. Six months of "lint
@@ -255,11 +286,18 @@ ingest, validate, propose, accept, approve, attest, verify — plus two live tam
 scenarios. Mocked tests of a hash chain prove nothing, because the thing under test is
 precisely whether the real bytes in the real database still hash to the signed root.
 
+**Running the model for real.** `npm run ai:check` calls all four AI jobs against a live
+key and reports, per job, whether it reached the API or fell back. This exists because
+§3.1 and §3.2 were both invisible to every other mechanism above: the app worked, the
+tests passed, and the UI honestly labelled its output — the only symptom was that the
+model was never actually consulted, or was consulted and believed too far. A fallback and
+a silent failure are indistinguishable unless something counts them.
+
 **Driving the real UI.** `npm run ui:demo` runs the five-minute demo through a real
 browser as three different people, and asserts the two claims that are easy to state and
 hard to prove — that accepting a proposal does *not* touch the loan record, and that a
 direct SQL edit to a sealed record is caught and named. Both assertions read the
-database, not the screen. §3.5 was found this way and could not have been found any other
+database, not the screen. §3.6 was found this way and could not have been found any other
 way.
 
 ---
@@ -269,14 +307,18 @@ way.
 - **Knowing when its own prior is stale.** §3.1 is the clean example: confident,
   well-formed, current-looking code against an API surface that had moved. There is no
   hedging in the output to signal it. The only defence is running the thing.
-- **Resolving underspecification toward the simpler code.** §3.4. Ambiguity gets resolved
+- **Resolving underspecification toward the simpler code.** §3.5. Ambiguity gets resolved
   silently, and always in the direction of less work.
-- **Distinguishing "the check is correct" from "the experience is correct."** §3.6.
+- **Distinguishing "the check is correct" from "the experience is correct."** §3.7.
+- **Answering the question it was given rather than the one that mattered.** §3.2. Asked
+  to cluster a sample, it clustered the sample — correctly, fluently, and with counts that
+  described the sample rather than the tape. The model was not wrong; the task was wrong,
+  and nothing in a well-formed answer tells you that.
 - **Holding a cross-cutting invariant without being reminded.** Every one of the five
   invariants in `AGENTS.md` is there because it was violated at least once in code that
   was locally reasonable. Locality is the model's blind spot, and a written brief is a
   cheaper fix than review.
-- **Its own tests.** §3.7. A generated test that passes is weak evidence; a generated test
+- **Its own tests.** §3.8. A generated test that passes is weak evidence; a generated test
   that fails is worth reading twice, because it is often the test that is wrong.
 
 ## 6 · What it was consistently good at

@@ -1,8 +1,19 @@
 /**
  * End-to-end acceptance run against a real database, with no browser.
- * ingest -> map -> validate -> propose -> accept -> approve -> attest -> verify
- *        -> tamper directly in SQL -> verify fails and names the loan
+ * ingest -> map -> validate -> propose -> accept -> approve -> exclude -> attest
+ *        -> verify -> tamper directly in SQL -> verify fails and names the loan
+ *
+ * **The model is forced off for this run.** (The assignment below sits above the imports
+ * for readability; ES module hoisting means it actually runs after them, which is fine
+ * because provider resolution reads the environment lazily, per call, not at import.)
+ * That is the point of it: the central promise is that every AI feature has a
+ * deterministic twin and the whole system works without a key, so this run proves that
+ * promise on every commit — and it does so without a network call, a rate limit, or a
+ * model's judgement anywhere in the assertions. The live path is `npm run ai:check`,
+ * which is a separate question deliberately asked separately.
  */
+process.env.AI_ENABLED = "false";
+
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { and, eq, sql } from "drizzle-orm";
@@ -54,10 +65,11 @@ async function main() {
   const counts = await tapeCounts(ing.tapeId);
   console.log(`  severity`, counts.bySeverity, `gating open ${counts.openGating}`);
 
-  console.log("\n--- 3. the AI cluster job (fallback path, model disabled) ---");
+  console.log("\n--- 3. the cluster job, deterministic path (model forced off) ---");
   const clusters = await clusterExceptions(ing.tapeId);
   const top = clusters[0];
   console.log(`  ${clusters.length} clusters; largest: "${top.label}" x${top.exceptionIds.length} (${top.source})`);
+  check(top.source === "RULE", `clustering ran deterministically (source ${top.source})`);
   check(top.exceptionIds.length === 45, `largest cluster holds 45 exceptions (got ${top.exceptionIds.length})`);
 
   console.log("\n--- 4. attestation is blocked while gating exceptions are open ---");
