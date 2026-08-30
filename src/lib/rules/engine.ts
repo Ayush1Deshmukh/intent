@@ -210,6 +210,32 @@ export function deterministicRepair(
   rec: EngineRecord,
   raw: Partial<Record<CanonicalField, string>>,
 ): Repair | null {
+  const repair = computeRepair(rule, rec, raw);
+  if (!repair) return null;
+
+  /**
+   * A repair that changes nothing is not a repair.
+   *
+   * The conflict rule fires whenever two sources disagree about a *row*, and the
+   * materiality threshold is per-record — so a loan flagged for a balance discrepancy
+   * also offers to "correct" its payment status from DELINQUENT to DELINQUENT, because
+   * the servicer happens to report the same value. That proposal was reaching the
+   * reviewer queue, being accepted, being approved, and writing a CHANGE_APPROVED event
+   * for a change that did not occur. An audit trail that records changes which never
+   * happened is worse than one that records nothing.
+   */
+  const current = rec.values[repair.field];
+  const before = current === null || current === undefined ? "" : String(current);
+  if (before === String(repair.toValue ?? "")) return null;
+
+  return repair;
+}
+
+function computeRepair(
+  rule: RuleDef,
+  rec: EngineRecord,
+  raw: Partial<Record<CanonicalField, string>>,
+): Repair | null {
   const v = rec.values;
   switch (rule.repairHint) {
     case "payment.amortizing": {

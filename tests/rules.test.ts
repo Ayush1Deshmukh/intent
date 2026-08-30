@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { RULE_CATALOG, RULE_BY_CODE } from "@/lib/rules/catalog";
-import { runRules, EngineRecord, computeStats } from "@/lib/rules/engine";
+import { runRules, EngineRecord, computeStats, deterministicRepair } from "@/lib/rules/engine";
 import { amortPayment } from "@/lib/rules/dsl";
 
 const SERVICERS = new Set(["SVC-01", "SVC-02"]);
@@ -125,6 +125,30 @@ describe("null safety — the rule that stops the exception count exploding", ()
     for (const c of ["RNG-001","RNG-002","RNG-003","RNG-004","RNG-005","XFD-001","XFD-003","XFD-004","XFD-005","FMT-004","FMT-005","CON-002","CON-003","STL-001","STA-001"]) {
       expect(codes, `${c} must not fire on a null value`).not.toContain(c);
     }
+  });
+});
+
+describe("a repair that changes nothing is not offered", () => {
+  it("declines to 'correct' a conflicted field whose sources already agree", () => {
+    // CON-001 fires per record, so a loan flagged for a balance discrepancy also
+    // reaches the repair path for every other field in the conflict set. Where the
+    // servicer reports the value the tape already holds, there is nothing to propose —
+    // and proposing it anyway wrote a CHANGE_APPROVED event for a change that never
+    // happened.
+    const rule = RULE_BY_CODE.get("CON-001")!;
+    const rec = base();
+    rec.conflicts = { paymentStatus: { primary: "DELINQUENT", secondary: "DELINQUENT", source: "servicer update" } };
+    rec.values.paymentStatus = "DELINQUENT";
+    expect(deterministicRepair(rule, rec, {})).toBeNull();
+  });
+
+  it("still offers one when the sources genuinely differ", () => {
+    const rule = RULE_BY_CODE.get("CON-001")!;
+    const rec = base();
+    rec.conflicts = { currentBalance: { primary: "350000.00", secondary: "348500.00", source: "servicer update" } };
+    rec.values.currentBalance = "350000.00";
+    const r = deterministicRepair(rule, rec, {});
+    expect(r?.toValue).toBe("348500.00");
   });
 });
 
