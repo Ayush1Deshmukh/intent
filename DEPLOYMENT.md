@@ -54,7 +54,7 @@ That applies every migration in `drizzle/` that has not run yet, records it in a
 `_migrations` table, and seeds the reference data. It is idempotent — run it again after
 any schema change and it applies only what is new.
 
-`seed.ts` creates the three demo users, six servicers and 28 rules. The demo tape itself
+`seed.ts` creates the three demo users, six servicers and 29 rules. The demo tape itself
 is loaded through the UI in one click, so nothing else has to be prepared.
 
 Optionally, seed the second tape — the one that has already been through review, which
@@ -64,7 +64,7 @@ beats 7 and 8 of the demo use:
 DATABASE_URL="<neon-pooled-url>" SEED_REVIEWED_TAPE=true npx tsx scripts/setup.ts
 ```
 
-It takes a couple of minutes against Neon, because it works all 209 exceptions through the
+It takes a couple of minutes against Neon, because it works all 216 exceptions through the
 real service paths rather than closing them with an UPDATE. That is the point of it.
 
 ## 2 · Push the repo
@@ -133,7 +133,7 @@ curl -si https://<your-app>.vercel.app/login | head -1            # 200
 ```
 
 Then log in as `operator@intain.demo` / `demo1234`, click **Load the demo tape**, confirm
-the mapping, and check you get 209 exceptions.
+the mapping, and check you get 216 exceptions.
 
 Or drive the whole thing against the deployed instance:
 

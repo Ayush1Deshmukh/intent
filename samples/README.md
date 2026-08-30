@@ -3,7 +3,7 @@
 The deliverable the challenge asks for: a verified loan dataset and an audit trail export,
 produced by this system and committed so they can be read without running anything.
 
-These came from the demo tape — 500 rows in, 209 exceptions raised, worked through
+These came from the demo tape — 500 rows in, 216 exceptions raised, worked through
 maker-checker, 442 loans sealed and 58 excluded. Everything here is synthetic.
 
 | File | What it is |
