@@ -1,0 +1,4 @@
+# Verified Tape is a demonstration instance holding synthetic loan data.
+# Nothing here is real, but nothing here is meant to be indexed either.
+User-agent: *
+Disallow: /
