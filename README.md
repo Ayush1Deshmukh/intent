@@ -57,8 +57,9 @@ curl -X POST -H "x-demo-token: $DEMO_RESET_TOKEN" http://localhost:3000/api/demo
 ## Verify, test, break it
 
 ```bash
-npm run test          # 113 unit tests: coercion, rules engine, hashing, policy matrix,
-                      # and the two descriptions of every AI output schema agreeing
+npm run test          # 132 unit tests: coercion, rules engine, hashing, the policy
+                      # matrix, provider resolution, the two descriptions of every AI
+                      # output schema agreeing, and the OpenAPI spec matching the routes
 npm run e2e           # full pipeline against a real Postgres db, no mocks —
                       # ingest -> validate -> propose -> accept -> approve -> exclude
                       # -> attest -> verify, plus two live tamper scenarios

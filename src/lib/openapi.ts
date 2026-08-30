@@ -204,7 +204,11 @@ export function buildOpenApi(origin: string) {
       "/api/v1/tapes/{id}/cluster": {
         post: {
           tags: ["Exceptions"], summary: "Group open exceptions by root cause",
-          description: "Falls back to deterministic grouping when the model is unavailable, so this endpoint always answers.",
+          description: [
+            roleNote("tape:read"),
+            "POST because it may call a model, but it writes nothing — the response is advisory.",
+            "Falls back to deterministic grouping when the model is unavailable, so this endpoint always answers.",
+          ].join(" "),
           parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
           responses: { 200: { description: "Clusters" } },
         },
@@ -212,7 +216,12 @@ export function buildOpenApi(origin: string) {
       "/api/v1/exceptions/{id}/explain": {
         post: {
           tags: ["Exceptions"], summary: "Explain one exception in plain language",
-          description: "Never proposes a value. Falls back to the rule's own description when the model is unavailable.",
+          description: [
+            roleNote("tape:read"),
+            "POST because it may call a model, but it writes nothing.",
+            "Never proposes a value — that is a separate endpoint, and a separate decision.",
+            "Falls back to the rule's own description when the model is unavailable.",
+          ].join(" "),
           parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
           responses: { 200: { description: "Explanation" }, 404: problem },
         },
@@ -245,7 +254,12 @@ export function buildOpenApi(origin: string) {
       "/api/v1/proposals/{id}/decision": {
         post: {
           tags: ["Review"], summary: "Accept, approve or reject a proposal",
+          // The one endpoint whose permitted role depends on the body, so its note is
+          // assembled from both actions rather than from one.
           description: [
+            `Roles: ${[...new Set([...POLICY["proposal:accept"], ...POLICY["proposal:approve"]])]
+              .map((r: Role) => ROLE_LABEL[r]).join(", ")}.`,
+            "Which of the two is required depends on `action`.",
             "`accept` (Data Operator) turns a proposal into a pending change; the loan is untouched.",
             "`approve` (Reviewer) applies it — the only call in this API that mutates a loan record.",
             "The person who accepted cannot approve: that returns 403 self-approval-forbidden.",

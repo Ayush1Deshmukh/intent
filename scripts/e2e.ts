@@ -161,10 +161,29 @@ async function main() {
   check(v2.data.divergences[0]?.loanId === victim.loanId, `the divergent loan is named: ${victim.loanId}`);
 
   console.log("\n--- 10. TAMPER: edit an audit event in place ---");
-  await db.execute(sql`UPDATE audit_events SET payload = '{"tampered":true}'::jsonb WHERE seq = 5`);
+  // appended, not replaced, so removing the key restores the exact bytes the stored
+  // hash was computed over — see step 11
+  await db.execute(sql`UPDATE audit_events SET payload = payload || '{"tampered":true}'::jsonb WHERE seq = 5`);
   const v3 = await verifyTape(ing.tapeId);
   console.log(`  chain ${v3.chain.ok ? "intact" : "BROKEN"} — ${v3.chain.reason ?? ""}`);
   check(!v3.chain.ok && v3.chain.firstBadSeq === 5, "the chain check names event 5 as the first bad link");
+
+  console.log("\n--- 11. restore, so this run leaves nothing broken behind ---");
+  // Two reasons this is not just tidiness. It asserts that the repair path works, which
+  // the demo depends on to be re-runnable for a second judge. And without it, anyone who
+  // runs the acceptance test shortly before a demo opens the app to a broken chain and a
+  // divergent ledger — the test's own damage, indistinguishable from a real failure.
+  for (const { v } of await db.select({ v: verifiedRecords }).from(verifiedRecords)) {
+    const payload = v.payload as Record<string, string | null>;
+    await db.update(loanRecords)
+      .set({ currentBalance: payload.currentBalance, interestRate: payload.interestRate, recordHash: v.recordHash })
+      .where(eq(loanRecords.id, v.loanRecordId));
+  }
+  await db.execute(sql`UPDATE audit_events SET payload = payload - 'tampered' WHERE payload ? 'tampered'`);
+
+  const v4 = await verifyTape(ing.tapeId);
+  console.log(`  chain ${v4.chain.ok ? "intact" : "BROKEN"}   data ${v4.data.ok ? "matches" : "DIVERGES"}`);
+  check(v4.ok, "both tampers reverse cleanly and the tape verifies again");
 
   const eventCount = await db.select({ n: sql<number>`count(*)::int` }).from(auditEvents);
   console.log(`\n--- audit chain: ${eventCount[0].n} events ---`);

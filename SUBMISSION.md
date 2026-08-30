@@ -173,7 +173,9 @@ clustering read better than its replacement while reporting a 45-loan problem as
 
 ### 6 · API design, deployment, and demo readiness
 
-- **15 documented endpoints**, all typed, all `requireRole()`-first, all returning RFC 7807
+- **15 endpoints, 17 operations** — every route under `/api/v1` and nothing else;
+  `tests/openapi.test.ts` walks the filesystem and fails if the spec omits a route,
+  describes one that does not exist, or leaves a write endpoint without naming its roles, all typed, all `requireRole()`-first, all returning RFC 7807
   problem documents with a specific `type` slug and a sentence a person can act on.
 - **OpenAPI 3.1 generated programmatically** from the same policy table and rule catalogue
   the app runs on, so the spec cannot describe an app that does not exist.
@@ -218,7 +220,7 @@ Named here because scope discipline is a decision, not an omission.
 
 ```bash
 npm run lint          # clean
-npm run test          # 113 unit tests
+npm run test          # 132 unit tests
 npm run dry-run       # parse the fixtures, print the defect breakdown, check the canary
 npm run e2e           # the whole pipeline against a real database, no mocks, plus tampers
 npm run ui:demo       # the five-minute demo through a real browser, all three roles
