@@ -28,7 +28,7 @@ export default function Zones({ files, rows, exceptions, cleanRows, sealed, excl
       <ol className="grid gap-3 md:grid-cols-3 stagger">
         <Zone
           n={1} name="Raw quarantine" tone="var(--color-muted)"
-          headline={rawRows.toLocaleString()} unit={rawRows === 1 ? "row" : "rows"}
+          headline={rawRows.toLocaleString("en-US")} unit={rawRows === 1 ? "row" : "rows"}
           rule="stored verbatim, exactly as delivered, and never touched again"
         >
           <ul className="flex flex-col gap-1.5">
@@ -47,7 +47,7 @@ export default function Zones({ files, rows, exceptions, cleanRows, sealed, excl
 
         <Zone
           n={2} name="Active working" tone="var(--color-accent)"
-          headline={rows.toLocaleString()} unit={rows === 1 ? "record" : "records"}
+          headline={rows.toLocaleString("en-US")} unit={rows === 1 ? "record" : "records"}
           rule="typed and corrected — but only ever under maker-checker"
         >
           <dl className="flex flex-col gap-1 text-[0.7rem]">
@@ -58,7 +58,7 @@ export default function Zones({ files, rows, exceptions, cleanRows, sealed, excl
 
         <Zone
           n={3} name="Verified ledger" tone="var(--color-ok)"
-          headline={sealed ? sealed.toLocaleString() : "—"} unit={sealed ? "sealed" : "nothing sealed yet"}
+          headline={sealed ? sealed.toLocaleString("en-US") : "—"} unit={sealed ? "sealed" : "nothing sealed yet"}
           rule="hash, lineage and signer, sealed; re-written only by a new sign-off"
         >
           {sealed ? (
@@ -105,7 +105,7 @@ function Row({ label, value, tone }: { label: string; value: number; tone?: stri
   return (
     <div className="flex justify-between gap-2">
       <dt className="text-muted">{label}</dt>
-      <dd className="mono tnum" style={tone ? { color: tone } : undefined}>{value.toLocaleString()}</dd>
+      <dd className="mono tnum" style={tone ? { color: tone } : undefined}>{value.toLocaleString("en-US")}</dd>
     </div>
   );
 }

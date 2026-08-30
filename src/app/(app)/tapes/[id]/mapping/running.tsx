@@ -51,7 +51,7 @@ export default function PipelineRunning({ rows }: { rows: number }) {
       <div className="card p-7 w-full max-w-md flex flex-col gap-5 rise">
         <div className="flex flex-col gap-1">
           <span className="eyebrow">Validating</span>
-          <h2 className="text-lg font-semibold">{rows.toLocaleString()} rows through the pipeline</h2>
+          <h2 className="text-lg font-semibold">{rows.toLocaleString("en-US")} rows through the pipeline</h2>
           <p className="text-xs text-muted">
             Nothing has been written to the working tables yet — this runs in one transaction.
           </p>

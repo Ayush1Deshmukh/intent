@@ -35,9 +35,12 @@ export function CountUp({ value, decimals = 0, suffix = "", durationMs = 900 }: 
     return () => { if (frame.current) cancelAnimationFrame(frame.current); };
   }, [value, durationMs]);
 
+  // An explicit locale, not the ambient one: `undefined` resolves from the host, and
+  // Node's default differs from the browser's often enough to produce a hydration
+  // mismatch on a number that is otherwise identical.
   return (
     <span className="tnum">
-      {shown.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
+      {shown.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
       {suffix}
     </span>
   );

@@ -25,7 +25,7 @@ export default function LoginForm({ email, label, blurb, manual }: {
       <button
         type="submit"
         disabled={pending}
-        className="card w-full text-left p-4 hover:bg-surface2 transition-colors disabled:opacity-50"
+        className="card card-hover w-full text-left p-4 hover:bg-surface2 disabled:opacity-50"
       >
         <span className="flex items-center justify-between gap-3">
           <span className="font-serif font-semibold">{label}</span>
