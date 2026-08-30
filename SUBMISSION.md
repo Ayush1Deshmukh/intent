@@ -25,10 +25,17 @@ on trust, which is the same principle the product is built on.
 Three files arrive together and disagree: a 500-row loan tape, a servicer extract
 reported five days later, and a document manifest.
 
-- **Headers are matched in four passes** — exact, a 168-entry alias dictionary over 19
+- **Headers are matched in four passes** — exact, a 218-entry alias dictionary over 26
   canonical fields, fuzzy, and value-shape inference — and every match shows its method
   and its confidence on the mapping screen, for a human to confirm before anything is
   interpreted. `src/lib/ingest/map.ts`
+- **The canonical schema covers every field in the challenge's example dataset**, so a
+  tape written to that schema maps cleanly instead of arriving as a screenful of
+  unmapped columns. The demo fixture carries all of them under headers a real tape would
+  use — `Purpose`, `Grade`, `Emp Length`, `Income Band`, `Servicer Name`, `Last Paid`,
+  `Source System` — and 25 of its 27 columns resolve automatically. The two that do not
+  are deliberate: `Col_17`, which has no recognisable name and is inferred from the shape
+  of its values, and `Notes`, free text with no canonical equivalent, correctly left alone.
 - **Column-aware coercion**, not cell-by-cell guessing. A date column resolves to one
   format from the distribution of its values, then every cell is parsed under that hint —
   otherwise `03/04/2024` and `13/04/2024` in the same column parse under different

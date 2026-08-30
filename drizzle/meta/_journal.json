@@ -15,6 +15,13 @@
       "when": 1788030203459,
       "tag": "0001_rule_depends_on",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788112002252,
+      "tag": "0002_problem_statement_fields",
+      "breakpoints": true
     }
   ]
 }

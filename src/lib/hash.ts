@@ -7,12 +7,21 @@ export function sha256(input: string | Buffer): string {
   return createHash("sha256").update(input).digest("hex");
 }
 
-/** the 19 business fields, formatted for hashing. nothing else may enter. */
+/**
+ * The business fields, formatted for hashing. Nothing else may enter.
+ *
+ * Written out by hand rather than looped over CANONICAL_FIELDS, deliberately: the set
+ * of fields a hash covers is a contract with everyone who ever verified a record, and
+ * it should not silently widen because someone added a column. Adding a field here is
+ * a decision, and it invalidates previously issued attestations — which is correct,
+ * because those attestations covered a different thing.
+ */
 export function businessFields(r: Record<string, unknown>) {
   return {
     loanId: (r.loanId as string) ?? null,
     borrowerId: (r.borrowerId as string) ?? null,
     loanType: (r.loanType as string) ?? null,
+    loanPurpose: (r.loanPurpose as string) ?? null,
     originationDate: dateOnly(r.originationDate as string),
     maturityDate: dateOnly(r.maturityDate as string),
     originalPrincipal: fixed(r.originalPrincipal as string, 2),
@@ -22,13 +31,19 @@ export function businessFields(r: Record<string, unknown>) {
     paymentAmount: fixed(r.paymentAmount as string, 2),
     paymentStatus: (r.paymentStatus as string) ?? null,
     daysPastDue: (r.daysPastDue as number) ?? null,
+    lastPaymentDate: dateOnly(r.lastPaymentDate as string),
     borrowerState: (r.borrowerState as string) ?? null,
     borrowerZip: (r.borrowerZip as string) ?? null,
     creditScore: (r.creditScore as number) ?? null,
+    creditGrade: (r.creditGrade as string) ?? null,
+    employmentLength: (r.employmentLength as string) ?? null,
+    incomeBand: (r.incomeBand as string) ?? null,
     appraisedValue: fixed(r.appraisedValue as string, 2),
     servicerId: (r.servicerId as string) ?? null,
+    servicerName: (r.servicerName as string) ?? null,
     lastUpdatedAt: r.lastUpdatedAt ? new Date(r.lastUpdatedAt as string).toISOString() : null,
     documentStatus: (r.documentStatus as string) ?? null,
+    sourceSystem: (r.sourceSystem as string) ?? null,
   };
 }
 

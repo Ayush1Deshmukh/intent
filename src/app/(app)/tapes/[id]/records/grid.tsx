@@ -17,7 +17,11 @@ type Lineage = {
   verified?: { recordHash: string; eventSeq: number; verifiedByEmail: string } | null;
 };
 
-const COLS = ["loanId","borrowerId","originationDate","maturityDate","originalPrincipal","currentBalance","interestRate","termMonths","paymentStatus","daysPastDue","borrowerState","creditScore","documentStatus"];
+// The columns a reviewer scans. The full canonical record — all 26 fields — is in the
+// lineage drawer; a grid that shows everything shows nothing.
+const COLS = ["loanId","borrowerId","loanType","loanPurpose","originationDate","maturityDate",
+  "originalPrincipal","currentBalance","interestRate","termMonths","paymentStatus","daysPastDue",
+  "borrowerState","creditScore","creditGrade","servicerName","documentStatus"];
 
 export default function RecordGrid({ rows }: { rows: Row[] }) {
   const [q, setQ] = useState("");

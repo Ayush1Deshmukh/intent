@@ -66,7 +66,7 @@ it runs.
 
 **Operator → the tape overview.**
 
-500 rows. 209 exceptions. 68.2% of rows clean. 149 gating exceptions blocking sign-off.
+500 rows. 209 exceptions. 68.4% of rows clean. 149 gating exceptions blocking sign-off.
 
 The number to defend is **209**, not 500:
 

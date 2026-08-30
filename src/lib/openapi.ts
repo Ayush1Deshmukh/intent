@@ -80,6 +80,7 @@ export function buildOpenApi(origin: string) {
     servers: [{ url: origin }],
     tags: [
       { name: "Tapes", description: "Ingest and inspect batches" },
+      { name: "Loans", description: "The loan-first view: records, history, lineage" },
       { name: "Exceptions", description: "Triage and propose corrections" },
       { name: "Review", description: "Maker-checker decisions" },
       { name: "Verification", description: "Sign-off and independent proof" },
@@ -359,6 +360,120 @@ export function buildOpenApi(origin: string) {
           },
         },
       },
+      /* ---- the loan-first surface named in the challenge's Module H ---------- */
+
+      "/api/v1/loans": {
+        get: {
+          tags: ["Loans"], summary: "List canonical loan records",
+          description: [
+            roleNote("tape:read"),
+            "Defaults to the most recent tape; pass `tapeId` to pick one, or `tapeId=all` for every tape.",
+            "`q` searches loan id and borrower id. Cursor-paginated.",
+          ].join(" "),
+          parameters: [
+            { name: "tapeId", in: "query", schema: { type: "string" } },
+            { name: "status", in: "query", schema: { type: "string", enum: ["PENDING", "EXCEPTION", "VERIFIED", "REJECTED"] } },
+            { name: "q", in: "query", schema: { type: "string" } },
+            { name: "limit", in: "query", schema: { type: "integer", maximum: 200 } },
+            { name: "cursor", in: "query", schema: { type: "string" } },
+          ],
+          responses: { 200: { description: "A page of loans" }, 401: problem },
+        },
+      },
+      "/api/v1/loans/{loanId}": {
+        get: {
+          tags: ["Loans"], summary: "One loan, with everything said about it",
+          description: [
+            roleNote("tape:read"),
+            "The canonical record, the raw source row it came from, every exception raised on it,",
+            "every proposal and its decision, and the seal if it has one.",
+          ].join(" "),
+          parameters: [
+            { name: "loanId", in: "path", required: true, schema: { type: "string" } },
+            { name: "tapeId", in: "query", schema: { type: "string" } },
+          ],
+          responses: { 200: { description: "The loan and its history" }, 401: problem, 404: problem },
+        },
+      },
+      "/api/v1/exceptions": {
+        get: {
+          tags: ["Exceptions"], summary: "The exception queue, across tapes or within one",
+          description: [
+            roleNote("tape:read"),
+            "Filter by `severity`, `status` and `rule`; both repeatable. Cursor-paginated.",
+          ].join(" "),
+          parameters: [
+            { name: "tapeId", in: "query", schema: { type: "string" } },
+            { name: "severity", in: "query", schema: { type: "string", enum: ["BLOCKER", "CRITICAL", "WARNING", "INFO"] } },
+            { name: "status", in: "query", schema: { type: "string", enum: ["OPEN", "PENDING_APPROVAL", "RESOLVED", "WAIVED", "REJECTED"] } },
+            { name: "rule", in: "query", schema: { type: "string" } },
+            { name: "limit", in: "query", schema: { type: "integer", maximum: 200 } },
+            { name: "cursor", in: "query", schema: { type: "string" } },
+          ],
+          responses: { 200: { description: "A page of exceptions" }, 401: problem },
+        },
+      },
+      "/api/v1/verified-loans": {
+        get: {
+          tags: ["Verification"], summary: "The sealed ledger",
+          description: [
+            roleNote("verified:read"),
+            "A listing is loan data, so it needs a session; the public half of verification is",
+            "the per-loan proof at /api/v1/verified-loans/{loanId}.",
+          ].join(" "),
+          parameters: [
+            { name: "tapeId", in: "query", schema: { type: "string" } },
+            { name: "limit", in: "query", schema: { type: "integer", maximum: 500 } },
+          ],
+          responses: { 200: { description: "Sealed records" }, 401: problem },
+        },
+      },
+      "/api/v1/verified-loans/{loanId}": {
+        get: {
+          tags: ["Verification"], summary: "A loan's Merkle proof, and the record if you may see it",
+          description: [
+            "**The proof is public; the data is not.** Anyone gets the record hash, its Merkle path",
+            "and the attested root — enough to verify a record they already hold, disclosing nothing",
+            `about any borrower. The sealed record is included only for ${roleNote("verified:read").replace("Roles: ", "").replace(".", "")}.`,
+          ].join(" "),
+          security: [],
+          parameters: [
+            { name: "loanId", in: "path", required: true, schema: { type: "string" } },
+            { name: "tapeId", in: "query", schema: { type: "string" } },
+          ],
+          responses: { 200: { description: "Proof, plus the record when entitled" }, 404: problem },
+        },
+      },
+      "/api/v1/audit/{loanId}": {
+        get: {
+          tags: ["Verification"], summary: "Every audit event that touches one loan",
+          description: [
+            roleNote("audit:read"),
+            "A projection of the append-only chain filtered to this loan's record, exceptions and",
+            "proposals. The `seq` values are the real ones, so each event can be found and checked",
+            "in the full chain.",
+          ].join(" "),
+          parameters: [
+            { name: "loanId", in: "path", required: true, schema: { type: "string" } },
+            { name: "tapeId", in: "query", schema: { type: "string" } },
+          ],
+          responses: { 200: { description: "The loan's slice of the chain" }, 401: problem, 404: problem },
+        },
+      },
+      "/api/v1/summary": {
+        get: {
+          tags: ["Verification"], summary: "Counts, data-quality score and verification state",
+          description: [
+            roleNote("tape:read"),
+            "Portfolio-wide by default; pass `tapeId` to narrow. The data-quality score is the share",
+            "of loan records carrying no exception — deliberately not a weighted composite, because a",
+            "single number that hides which rules failed is worse than none.",
+          ].join(" "),
+          parameters: [{ name: "tapeId", in: "query", schema: { type: "string" } }],
+          responses: { 200: { description: "Portfolio summary" }, 401: problem },
+        },
+      },
+
       "/api/v1/tapes/{id}/audit": {
         get: {
           tags: ["Verification"], summary: "The hash-chained event history",

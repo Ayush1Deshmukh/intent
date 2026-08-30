@@ -36,7 +36,8 @@ function routesOnDisk(dir = API_ROOT, prefix = "/api/v1"): { path: string; metho
 }
 
 const spec = buildOpenApi("") as unknown as {
-  paths: Record<string, Record<string, { summary?: string; description?: string; responses?: object }>>;
+  tags: { name: string }[];
+  paths: Record<string, Record<string, { summary?: string; description?: string; responses?: object; tags?: string[] }>>;
 };
 
 describe("the OpenAPI spec describes the API that actually exists", () => {
@@ -71,6 +72,17 @@ describe("the OpenAPI spec describes the API that actually exists", () => {
         const where = `${method.toUpperCase()} ${path}`;
         expect(op.summary?.length ?? 0, `${where} has no summary`).toBeGreaterThan(8);
         expect(Object.keys(op.responses ?? {}).length, `${where} documents no responses`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("every tag an operation uses is declared in the spec", () => {
+    const declared = new Set((spec as unknown as { tags: { name: string }[] }).tags.map((t) => t.name));
+    for (const [path, ops] of Object.entries(spec.paths)) {
+      for (const [method, op] of Object.entries(ops)) {
+        for (const t of (op as { tags?: string[] }).tags ?? []) {
+          expect(declared.has(t), `${method.toUpperCase()} ${path} uses undeclared tag "${t}"`).toBe(true);
+        }
       }
     }
   });

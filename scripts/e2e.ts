@@ -50,8 +50,14 @@ async function main() {
   ], 5000);
   console.log(`  tape ${ing.tapeId}  rows ${ing.rowCount}  sha ${ing.sha256.slice(0, 12)}...`);
   const auto = ing.matches.filter((m) => m.canonicalField).length;
+  const unmapped = ing.matches.filter((m) => !m.canonicalField).map((m) => m.sourceHeader.trim());
   check(ing.rowCount === 500, `500 rows landed in the raw quarantine zone`);
-  check(auto === 18, `${auto} of ${ing.matches.length} headers mapped automatically`);
+  // Assert the property, not the count: everything maps except the two columns that
+  // genuinely have no canonical equivalent. A bare number goes stale the moment a
+  // column is added and tells you nothing about whether the mapping is still correct.
+  check(auto === ing.matches.length - 2, `${auto} of ${ing.matches.length} headers mapped automatically`);
+  check(unmapped.sort().join(",") === "Notes,Pool Cd",
+    `the only unmapped columns are the two with no canonical equivalent (got: ${unmapped.join(", ")})`);
 
   console.log("\n--- 2. confirm mapping, normalize, validate ---");
   const res = await normalizeAndValidate(opSession, ing.tapeId, "2026-07-31");

@@ -170,7 +170,28 @@ for (const l of loans) {
 }
 
 /* ------------------------------------------------------- write loan_tape */
-const TAPE_HEADERS = ["Loan No","Borrower ID","Product","Orig Dt","Mat Dt","Orig Bal ($)","Curr Bal ","Int Rate","Term","P&I","Status","DPD","Prop St","Zip","FICO","Col_17","Svcr","As Of","Pool Cd","Notes"];
+/**
+ * Deliberately messy, and deliberately complete.
+ *
+ * Every field the challenge's example dataset lists appears here under a header a real
+ * tape would actually use — "Purpose", "Grade", "Emp Length", "Income Band", "Servicer
+ * Name", "Last Paid", "Source System" — so the mapping layer is exercised against the
+ * organizer's schema rather than only against a schema of our own choosing. `Col_17`
+ * (appraised value) still has no recognisable name, and `Notes` is still free text that
+ * must stay unmapped: the point is a file where most columns resolve and two do not.
+ */
+const TAPE_HEADERS = [
+  "Loan No","Borrower ID","Product","Purpose","Orig Dt","Mat Dt","Orig Bal ($)","Curr Bal ",
+  "Int Rate","Term","P&I","Status","DPD","Last Paid","Prop St","Zip","FICO","Grade",
+  "Emp Length","Income Band","Col_17","Svcr","Servicer Name","As Of",
+  "Source System","Pool Cd","Notes",
+];
+
+const PURPOSES = ["Purchase", "Refinance", "Cash-out refi", "Home improvement", "Debt consolidation"];
+const GRADES = ["A", "A-", "B+", "B", "B-", "C+", "C"];
+const EMP_LENGTHS = ["< 1 year", "1 year", "2 years", "3 years", "5 years", "7 years", "10+ years"];
+const INCOME_BANDS = ["<50k", "50-75k", "75-100k", "100-150k", "150-250k", "250k+"];
+const SOURCE_SYSTEMS = ["ENCOMPASS", "FISERV", "BLACKKNIGHT", "SHAWBROOK", "LEGACY-AS400"];
 
 function stateCell(l: Loan): string {
   if (D.stateJunk.has(l.index)) { l.defects.push("state-unresolvable"); return pick(["Ontario","XX","N/A","--","Unknown"]); }
@@ -213,13 +234,18 @@ for (const l of loans) {
     ? (l.defects.push("zip-leading-zero-stripped"), String(Number(l.zip)).slice(0, 4))
     : l.zip;
 
+  // the last payment date sits between origination and the as-of date, as it would
+  const lastPaid = new Date(l.asOf.getTime() - Math.floor(rnd() * 45) * 86400000);
+
   tapeRows.push([
-    l.id, l.borrowerId, l.product, origCell, matCell,
+    l.id, l.borrowerId, l.product, pick(PURPOSES), origCell, matCell,
     `$${l.origBal.toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
     balanceCell(l), rateCell, String(l.term), money(l.payment),
-    l.status, String(l.dpd), stateCell(l), zipCell,
-    l.fico === null ? "" : String(l.fico),
-    String(l.appraised), l.servicer, isoDay(l.asOf),
+    l.status, String(l.dpd), isoDay(lastPaid), stateCell(l), zipCell,
+    l.fico === null ? "" : String(l.fico), pick(GRADES),
+    pick(EMP_LENGTHS), pick(INCOME_BANDS),
+    String(l.appraised), l.servicer, `${l.servicer} Servicing LLC`, isoDay(l.asOf),
+    pick(SOURCE_SYSTEMS),
     pick(["P-2024-A", "P-2024-B", "P-2023-C"]), l.notes,
   ]);
 }
