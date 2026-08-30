@@ -106,9 +106,12 @@ the rule expected.
 
 > That chip says whether a model wrote this or a rule did. You can always tell.
 
-**Click "Propose a fix".** A proposed change appears with a before-and-after, a
-confidence score, and its evidence — the principal, the term, the rate, and the payment
-those three actually imply.
+**Click "Propose a fix".** This one takes a few seconds with a cold cache — about nine
+on a free tier, measured — and the panel says what it is doing while you wait. Use them:
+that is the moment to say the next sentence, not after.
+
+A proposed change appears with a before-and-after, a confidence score, and its evidence —
+the principal, the term, the rate, and the payment those three actually imply.
 
 Now say the most important sentence in the demo:
 
@@ -275,7 +278,8 @@ Judges respond well to this. Pretending otherwise is what looks bad.
 | Symptom | Do this |
 |---|---|
 | Demo state is dirty | `curl -X POST -H "x-demo-token: $DEMO_RESET_TOKEN" <url>/api/demo/reset` |
-| AI feels slow, the free tier rate-limits you, or the venue wifi is down | Nothing. Every AI feature has a deterministic fallback and the provenance chip will honestly say "rule-based". Run `npm run ai:check` beforehand to warm the cache — responses are cached by prompt hash, so the demo clicks are instant and offline. |
+| AI feels slow on the first click | Expected, and worth pre-empting: run `npm run ai:check` before the demo. Responses are cached by prompt hash, so the clicks you rehearse return instantly. Cold, explain takes about a second and propose about nine. |
+| The free tier rate-limits you, or the venue wifi is down | Nothing. Every AI feature has a deterministic fallback and the provenance chip will honestly say "rule-based". Run `npm run ai:check` beforehand to warm the cache — responses are cached by prompt hash, so the demo clicks are instant and offline. |
 | A tamper demo left the data broken | `npm run tamper -- --restore` |
 | The deployed instance is unreachable | Run locally. `npm run dev` and the same nine beats work. |
 

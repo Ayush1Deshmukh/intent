@@ -140,8 +140,14 @@ await shot(op, "04-drawer");
 const drawer = op.locator("aside");
 (await drawer.count()) ? ok("the exception drawer opens") : bad("no drawer");
 
+// Wait for the panel, not for a guess at how long a model takes. With a warm cache
+// this returns in milliseconds; with a cold one and a free-tier key it can take many
+// seconds, and a fixed sleep turns that into a spurious failure — which it did.
+const t0 = Date.now();
 await op.locator('button:has-text("Explain")').click();
-await op.waitForTimeout(6000);
+await drawer.locator('text=/What the rule checks/i').first().waitFor({ timeout: 60000 })
+  .catch(() => bad("no explanation appeared within 60s"));
+note(`explain returned in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
 await shot(op, "05-explained");
 const ex1 = await drawer.innerText();
 /What the rule checks/i.test(ex1) ? ok("explanation renders all three parts") : bad("explanation missing:\n" + ex1.slice(0, 500));
@@ -149,8 +155,11 @@ const ex1 = await drawer.innerText();
   ? ok("the explanation is labelled with its provenance (model vs rule)")
   : bad("provenance chip missing — a judge cannot tell what wrote this");
 
+const t1 = Date.now();
 await op.locator('button:has-text("Propose a fix")').click();
-await op.waitForTimeout(9000);
+await drawer.locator('text=/Proposed change/i').first().waitFor({ timeout: 60000 })
+  .catch(() => bad("no proposal appeared within 60s"));
+note(`propose returned in ${((Date.now() - t1) / 1000).toFixed(1)}s`);
 await shot(op, "06-proposal");
 const pr = await drawer.innerText();
 /Proposed change/i.test(pr) ? ok("a proposal is produced") : bad("no proposal:\n" + pr.slice(0, 600));
@@ -165,7 +174,8 @@ const before = loanId ? await sql(`select payment_amount from loan_records where
 note(`loan ${loanId} paymentAmount before = ${before}`);
 
 await op.locator('aside button:has-text("Accept")').click();
-await op.waitForTimeout(4000);
+await drawer.locator('text=/pending change waiting for a Reviewer/i').first().waitFor({ timeout: 30000 })
+  .catch(() => bad("accept produced no confirmation within 30s"));
 const acc = await drawer.innerText();
 /pending change waiting for a Reviewer/i.test(acc) ? ok("accept confirms it is now pending") : bad("accept feedback missing:\n" + acc.slice(-400));
 

@@ -138,6 +138,36 @@ export default function Queue({ rows, clusters, canAct, canWaive, canExclude }: 
   );
 }
 
+/**
+ * The wait, made legible.
+ *
+ * A cold proposal takes about nine seconds on a free tier — measured, not guessed —
+ * and nine seconds of a greyed-out button reads as a hang. This says what is happening
+ * and, more usefully, what will happen next: that whatever comes back is a proposal
+ * requiring two people, not an edit. That sentence is worth more on screen while the
+ * model is thinking than after it has answered.
+ */
+function Working({ kind }: { kind: "explain" | "propose" }) {
+  return (
+    <div className="card p-3.5 flex flex-col gap-2 bg-bg fadein" role="status" aria-live="polite">
+      <span className="flex items-center gap-2">
+        <span className="h-1.5 w-1.5 rounded-full bg-accent livepulse" aria-hidden />
+        <span className="eyebrow">
+          {kind === "explain" ? "Reading the rule and the row" : "Deriving a corrected value"}
+        </span>
+      </span>
+      <div className="h-1 w-full rounded-full bg-surface2 overflow-hidden">
+        <div className="h-full shimmer w-full" />
+      </div>
+      <p className="text-[0.7rem] text-muted leading-snug">
+        {kind === "explain"
+          ? "If the model is unavailable this falls back to the rule's own description, and the panel will say so."
+          : "Whatever comes back is a proposal. It cannot change this loan — an operator has to accept it and a different person has to approve it."}
+      </p>
+    </div>
+  );
+}
+
 function Drawer({ row, canAct, canWaive, canExclude, onClose }: {
   row: Row; canAct: boolean; canWaive: boolean; canExclude: boolean; onClose: () => void;
 }) {
@@ -187,7 +217,7 @@ function Drawer({ row, canAct, canWaive, canExclude, onClose }: {
         <div className="flex gap-2 flex-wrap">
           <button className="btn btn-sm" disabled={busy !== null}
             onClick={async () => { const r = await call("explain", `/api/v1/exceptions/${row.id}/explain`); if (r) setExplain(r); }}>
-            {busy === "explain" ? "Thinking…" : "Explain"}
+            {busy === "explain" ? "Thinking…" : explain ? "Explain again" : "Explain"}
           </button>
           {canAct ? (
             <button className="btn btn-sm btn-primary" disabled={busy !== null}
@@ -196,6 +226,8 @@ function Drawer({ row, canAct, canWaive, canExclude, onClose }: {
             </button>
           ) : null}
         </div>
+
+        {busy === "explain" || busy === "propose" ? <Working kind={busy} /> : null}
 
         {explain ? (
           <div className="card p-4 flex flex-col gap-3 border-l-2 border-brass">
