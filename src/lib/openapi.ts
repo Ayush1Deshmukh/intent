@@ -340,14 +340,23 @@ export function buildOpenApi(origin: string) {
       },
       "/api/v1/verified/{tapeId}": {
         get: {
-          tags: ["Verification"], summary: "Sealed records, with a Merkle proof for one loan",
-          description: "Public. With `loanId`, returns the record plus a proof a consumer can check offline against the root.",
+          tags: ["Verification"], summary: "A Merkle proof for one loan, and the record if you may see it",
+          description: [
+            "**The proof is public; the data is not.**",
+            "With `loanId`, anyone gets the record hash, its Merkle path and the attested root —",
+            "enough to verify a record they already hold, and disclosing nothing about any borrower.",
+            `The sealed record itself is included only for a session holding ${roleNote("verified:read").replace("Roles: ", "").replace(".", "")}.`,
+            "Without `loanId` this lists sealed records and therefore requires that session; 401 otherwise.",
+          ].join(" "),
           security: [],
           parameters: [
             { name: "tapeId", in: "path", required: true, schema: { type: "string" } },
             { name: "loanId", in: "query", schema: { type: "string" } },
           ],
-          responses: { 200: { description: "Records or a single record with its proof" }, 404: problem },
+          responses: {
+            200: { description: "The proof, plus the record when the caller is entitled to it" },
+            401: problem, 404: problem,
+          },
         },
       },
       "/api/v1/tapes/{id}/audit": {

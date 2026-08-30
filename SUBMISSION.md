@@ -25,9 +25,10 @@ on trust, which is the same principle the product is built on.
 Three files arrive together and disagree: a 500-row loan tape, a servicer extract
 reported five days later, and a document manifest.
 
-- **Headers are matched in four passes** — exact, a 168-entry alias dictionary over 19 canonical fields, fuzzy, and
-  value-shape inference — and every match shows its method and confidence on the mapping
-  screen for a human to confirm before anything is interpreted. `src/lib/ingest/map.ts`
+- **Headers are matched in four passes** — exact, a 168-entry alias dictionary over 19
+  canonical fields, fuzzy, and value-shape inference — and every match shows its method
+  and its confidence on the mapping screen, for a human to confirm before anything is
+  interpreted. `src/lib/ingest/map.ts`
 - **Column-aware coercion**, not cell-by-cell guessing. A date column resolves to one
   format from the distribution of its values, then every cell is parsed under that hint —
   otherwise `03/04/2024` and `13/04/2024` in the same column parse under different
@@ -180,8 +181,13 @@ clustering read better than its replacement while reporting a 45-loan problem as
 - **OpenAPI 3.1 generated programmatically** from the same policy table and rule catalogue
   the app runs on, so the spec cannot describe an app that does not exist.
   `GET /api/openapi`, rendered at `/docs`.
-- `GET /api/v1/verify/{tapeId}` is **public and unauthenticated by design** — anyone can
-  check a tape, nobody can change it.
+- **The proof is public; the data is not.** `GET /api/v1/verify/{tapeId}` is
+  unauthenticated by design — anyone can check a tape, nobody can change it. So is a
+  single loan's Merkle proof: `GET /api/v1/verified/{tapeId}?loanId=…` returns the record
+  hash, its path to the root, and the signed root, which is exactly what someone holding
+  a record needs and discloses nothing about any borrower. The sealed record itself, and
+  any bulk listing, require a session. Verification that needs no credential is the
+  property an auditor wants, and it costs nothing to give away because it reveals nothing.
 - The export bundle ships `VERIFY.md`: the exact hash formula, the leaf ordering, and the
   export's own verification result, so a third party can check the tape **without this
   system**.
@@ -220,7 +226,7 @@ Named here because scope discipline is a decision, not an omission.
 
 ```bash
 npm run lint          # clean
-npm run test          # 132 unit tests
+npm run test          # 140 unit tests
 npm run dry-run       # parse the fixtures, print the defect breakdown, check the canary
 npm run e2e           # the whole pipeline against a real database, no mocks, plus tampers
 npm run ui:demo       # the five-minute demo through a real browser, all three roles
@@ -230,3 +236,15 @@ npm run ai:check      # call the model for real, report live-vs-fallback per job
 `fixtures/clean_tape_50.csv` must always produce **zero** exceptions. It is the canary, and
 it is the single most effective test in the project: every false positive a rule change
 introduces shows up immediately on data known to be good.
+
+And the check that a local run cannot make — whether a *fresh clone* builds:
+
+```bash
+git clone <this repo> /tmp/vt && cd /tmp/vt && docker compose up --build
+```
+
+That is not a formality. It failed the first time it was tried: the Dockerfile copied
+`public/`, the directory was empty, and git does not carry empty directories — so the
+image built on the machine it was written on and nowhere else. A local build, lint, full
+test run and end-to-end pass were all green throughout. `tests/packaging.test.ts` now asks
+the question that finds it: not "does this filesystem have the path" but "would a clone".

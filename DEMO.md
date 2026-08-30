@@ -202,9 +202,11 @@ Export the verified tape. It is a zip, and the thing to open is `VERIFY.md`:
 > That file tells you how to check this tape without this system — the exact hash formula
 > for the event chain, the leaf ordering for the Merkle root, and this export's own result.
 > `attestation.json` carries the signed root and every leaf, so a downstream platform can
-> recompute it offline. There is also a per-loan proof endpoint if you only care about one
-> loan: `GET /api/v1/verified/{tapeId}?loanId=LN-000001` returns the record and its Merkle
-> proof, which verifies against the root without trusting this API.
+> recompute it offline. And there is a per-loan proof endpoint that needs no credential at
+> all: `GET /api/v1/verified/{tapeId}?loanId=LN-000117` returns the record hash, its Merkle
+> path and the signed root — enough to verify a loan you already hold, and nothing about
+> any borrower. The sealed record itself needs a session. The proof is public; the data is
+> not.
 
 ## 10 · Break it, live · 40s
 
