@@ -9,10 +9,10 @@ import { Hash } from "@/components/ui";
  * answers the question a reader has at this point on the page, which is "where has
  * my file got to".
  */
-export default function Zones({ files, rows, exceptions, cleanRows, sealed, excluded }: {
+export default function Zones({ files, rows, exceptions, cleanRows, sealed, excluded, unreadable }: {
   files: { kind: string; filename: string; sha256: string; rowCount: number }[];
   rows: number; exceptions: number; cleanRows: number;
-  sealed: number; excluded: number;
+  sealed: number; excluded: number; unreadable: number;
 }) {
   const rawRows = files.reduce((a, f) => a + f.rowCount, 0);
 
@@ -43,6 +43,14 @@ export default function Zones({ files, rows, exceptions, cleanRows, sealed, excl
               </li>
             ))}
           </ul>
+          {unreadable > 0 ? (
+            <p className="text-[0.65rem] text-crit leading-snug">
+              {unreadable} {unreadable === 1 ? "row" : "rows"} could not be parsed into a record.
+              They are held here with the error, not discarded.
+            </p>
+          ) : (
+            <p className="text-[0.65rem] text-muted leading-snug">every row parsed into a record</p>
+          )}
         </Zone>
 
         <Zone

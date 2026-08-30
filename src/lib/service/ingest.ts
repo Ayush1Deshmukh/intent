@@ -45,23 +45,51 @@ export async function ingestFiles(session: Session, name: string, files: UploadF
     }).returning();
 
     const events: NewEvent[] = [];
+    let failedRows = 0;
 
     for (const { kind, parsed: p } of parsed) {
       const [sf] = await tx.insert(sourceFiles).values({
         tapeId: tape.id, kind, filename: p.filename, sha256: p.sha256,
         rowCount: p.rows.length, headers: p.headers,
       }).returning();
+      failedRows += p.badRows.length;
 
       const raws = p.rows.map((original, i) => ({
         sourceFileId: sf.id, rowNumber: i + 2, original,
         rowHash: rowHash(p.sha256, i + 2, original),
       }));
-      for (const c of chunk(raws, 250)) await tx.insert(rawRecords).values(c);
+
+      /**
+       * Rows the parser could not turn into a record at all — a broken quote, the wrong
+       * number of columns — land in the quarantine zone too, flagged, rather than being
+       * dropped.
+       *
+       * They were previously discarded silently: `parseBuffer` collected them and nothing
+       * read the list. The row simply did not exist afterwards and the total was smaller,
+       * with nothing to say a row had been lost. For a system whose subject is data you
+       * are supposed to be able to trust, losing input without saying so is the worst
+       * failure available to it.
+       *
+       * A bad row has no values, so it never becomes a loan record and no rule can see
+       * it. It is reported as its own count instead.
+       */
+      const bad = p.badRows.map((b) => ({
+        sourceFileId: sf.id, rowNumber: b.rowNumber,
+        original: { _raw: b.raw } as Record<string, string>,
+        rowHash: rowHash(p.sha256, b.rowNumber, { _raw: b.raw }),
+        parseError: b.error,
+      }));
+
+      for (const c of chunk([...raws, ...bad], 250)) await tx.insert(rawRecords).values(c);
 
       events.push({
         tapeId: tape.id, actorId: session.userId, actorRole: session.role,
         action: "FILE_INGESTED", entityType: "sourceFile", entityId: sf.id,
-        payload: { kind, filename: p.filename, sha256: p.sha256, rows: p.rows.length, headers: p.headers },
+        payload: {
+          kind, filename: p.filename, sha256: p.sha256, rows: p.rows.length, headers: p.headers,
+          // recorded even when zero, so the chain always answers "did this file lose rows"
+          unreadableRows: p.badRows.length,
+        },
       });
     }
 
@@ -79,7 +107,8 @@ export async function ingestFiles(session: Session, name: string, files: UploadF
     });
 
     await emitMany(tx, events);
-    return { tapeId: tape.id, rowCount: primaryParsed.rows.length, sha256: primaryParsed.sha256, matches };
+    return { tapeId: tape.id, rowCount: primaryParsed.rows.length, failedRows,
+             sha256: primaryParsed.sha256, matches };
   });
 }
 

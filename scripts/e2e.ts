@@ -52,6 +52,7 @@ async function main() {
   const auto = ing.matches.filter((m) => m.canonicalField).length;
   const unmapped = ing.matches.filter((m) => !m.canonicalField).map((m) => m.sourceHeader.trim());
   check(ing.rowCount === 500, `500 rows landed in the raw quarantine zone`);
+  check(ing.failedRows === 0, `no row was unreadable (${ing.failedRows}) — and a count exists either way`);
   // Assert the property, not the count: everything maps except the two columns that
   // genuinely have no canonical equivalent. A bare number goes stale the moment a
   // column is added and tells you nothing about whether the mapping is still correct.

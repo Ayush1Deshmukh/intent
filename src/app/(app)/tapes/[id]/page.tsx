@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { and, desc, eq, sql } from "drizzle-orm";
-import { db, tapes, exceptions, rules, loanRecords, attestations, sourceFiles, auditEvents } from "@/lib/db";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { db, tapes, exceptions, rules, loanRecords, attestations, sourceFiles, auditEvents, rawRecords } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/policy";
 import { tapeCounts } from "@/lib/service/review";
@@ -34,6 +34,10 @@ export default async function TapePage({ params }: { params: Promise<{ id: strin
     .where(eq(exceptions.tapeId, id))
     .groupBy(rules.code, rules.name, rules.severity)
     .orderBy(desc(sql`count(*)`)).limit(6);
+
+  const [{ unreadable }] = await db.select({ unreadable: sql<number>`count(*)::int` })
+    .from(rawRecords).innerJoin(sourceFiles, eq(sourceFiles.id, rawRecords.sourceFileId))
+    .where(and(eq(sourceFiles.tapeId, id), isNotNull(rawRecords.parseError)));
 
   const [{ excludedCount }] = await db.select({ excludedCount: sql<number>`count(*)::int` })
     .from(loanRecords).where(and(eq(loanRecords.tapeId, id), eq(loanRecords.verificationStatus, "REJECTED")));
@@ -72,7 +76,7 @@ export default async function TapePage({ params }: { params: Promise<{ id: strin
       <Zones
         files={files.map((f) => ({ kind: f.kind, filename: f.filename, sha256: f.sha256, rowCount: f.rowCount }))}
         rows={records} exceptions={counts.total} cleanRows={clean}
-        sealed={att?.recordCount ?? 0} excluded={excludedCount}
+        sealed={att?.recordCount ?? 0} excluded={excludedCount} unreadable={unreadable}
       />
 
       <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr] lg:items-start stagger">

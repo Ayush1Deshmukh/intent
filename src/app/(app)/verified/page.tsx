@@ -1,8 +1,10 @@
 import { desc, eq } from "drizzle-orm";
-import { db, verifiedRecords, tapes, attestations } from "@/lib/db";
+import { db, verifiedRecords, tapes, attestations, users } from "@/lib/db";
 import { requireRolePage } from "@/lib/auth";
 import { Empty } from "@/components/ui";
+import { summary } from "@/lib/service/portfolio";
 import Ledger, { LedgerRow } from "./ledger";
+import VerifiedSummary from "./summary";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +20,17 @@ export default async function VerifiedPage() {
     .leftJoin(attestations, eq(attestations.tapeId, verifiedRecords.tapeId))
     .orderBy(desc(verifiedRecords.createdAt))
     .limit(CAP + 1);
+
+  // portfolio-wide, because a consumer's question is about the data they can use, not
+  // about whichever tape happened to be uploaded last
+  const overview = await summary(null);
+  const signOffs = await db.select({
+    a: attestations, tapeName: tapes.name, signer: users.email,
+  })
+    .from(attestations)
+    .innerJoin(tapes, eq(tapes.id, attestations.tapeId))
+    .leftJoin(users, eq(users.id, attestations.signerId))
+    .orderBy(desc(attestations.createdAt)).limit(10);
 
   const capped = rows.length > CAP;
   const items: LedgerRow[] = rows.slice(0, CAP).map((r) => {
@@ -42,6 +55,18 @@ export default async function VerifiedPage() {
           A downstream system can verify one of these without trusting this database.
         </p>
       </div>
+
+      <VerifiedSummary
+        quality={{ ...overview.dataQuality, records: overview.records }}
+        sealed={overview.verified.records}
+        attestations={overview.verified.attestations}
+        exceptions={{ bySeverity: overview.exceptions.bySeverity, openGating: overview.exceptions.openGating }}
+        history={signOffs.map((h) => ({
+          tapeId: h.a.tapeId, tapeName: h.tapeName,
+          signer: h.signer ?? h.a.signerEmail, at: h.a.createdAt.toISOString(),
+          records: h.a.recordCount, root: h.a.merkleRoot,
+        }))}
+      />
 
       {items.length === 0 ? (
         <Empty
