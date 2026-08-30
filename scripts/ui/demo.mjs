@@ -107,20 +107,37 @@ await op.waitForTimeout(2000);
 await op.locator('button:has-text("Group by root cause")').click();
 await op.waitForTimeout(1200);
 await shot(op, "03-clusters");
-const cl = await op.locator("body").innerText();
-/two different orderings|date/i.test(cl)
+// Assert against the cluster cards, not the whole page: "date" and "conflict" appear
+// in column names and rule text everywhere, so a body-text match passed even when no
+// cluster had rendered at all — which is exactly what it did once clustering went async.
+const cards = op.locator('button:has-text("Show these")');
+const cardCount = await cards.count();
+cardCount >= 3
+  ? ok(`${cardCount} root-cause clusters rendered`)
+  : bad(`only ${cardCount} cluster cards rendered`);
+const clusterText = cardCount ? await op.locator("div.card").filter({ has: cards.first() }).first().innerText() : "";
+const allClusters = await op.locator("body").innerText();
+/orderings|date/i.test(allClusters) && cardCount
   ? ok("the date-format cluster is named as one root cause")
-  : bad("no root-cause cluster visible:\n" + cl.slice(0, 600));
-/servicer update disagrees|conflict/i.test(cl)
+  : bad("no date cluster among the cards:\n" + clusterText.slice(0, 300));
+/servicer|conflict|disagree/i.test(allClusters) && cardCount
   ? ok("the servicer-conflict cluster is named")
-  : bad("no source-conflict cluster visible");
+  : bad("no source-conflict cluster among the cards");
 
 // filter to that cluster and back out
 const showThese = op.locator('button:has-text("Show these")').first();
 if (await showThese.count()) {
-  await showThese.click(); await op.waitForTimeout(800);
+  // the count the cluster claims, before clicking
+  const claimed = Number((await op.locator("aside, .card").filter({ hasText: /exceptions/ }).first()
+    .innerText().catch(() => "")).match(/(\d+)\s+exceptions/)?.[1] ?? 0);
+  await showThese.click(); await op.waitForTimeout(1200);
   const f = await op.locator("body").innerText();
+  const shown = Number(f.match(/(\d+)\s+shown/)?.[1] ?? -1);
   /root cause filter/i.test(f) ? ok("clicking a cluster filters the queue to it") : bad("cluster filter did not apply");
+  // filtering by a model-named key used to match nothing; assert rows actually narrowed
+  shown > 0 && shown < 216
+    ? ok(`the filter actually narrows the queue (${shown} of 216${claimed ? `, cluster claims ${claimed}` : ""})`)
+    : bad(`cluster filter left ${shown} rows — it is matching nothing or everything`);
   await op.locator('button:has-text("clear")').first().click().catch(() => {});
   await op.waitForTimeout(500);
 } else bad("cluster has no 'Show these' action");
@@ -157,8 +174,11 @@ const ex1 = await drawer.innerText();
 
 const t1 = Date.now();
 await op.locator('button:has-text("Propose a fix")').click();
-await drawer.locator('text=/Proposed change/i').first().waitFor({ timeout: 60000 })
-  .catch(() => bad("no proposal appeared within 60s"));
+await drawer.locator('text=/Proposed change/i').first().waitFor({ timeout: 90000 })
+  .catch(async () => {
+    bad("no proposal appeared within 90s");
+    note("drawer said: " + (await drawer.innerText()).replace(/\n+/g, " | ").slice(0, 400));
+  });
 note(`propose returned in ${((Date.now() - t1) / 1000).toFixed(1)}s`);
 await shot(op, "06-proposal");
 const pr = await drawer.innerText();

@@ -9,7 +9,8 @@ type Row = {
   expected: string | null; severity: string; status: string; clusterKey: string | null;
   ruleCode: string; ruleName: string; ruleDescription: string; category: string;
 };
-type Cluster = { key: string; label: string; rootCause: string; count: number; suggestedAction: string; source: string; confidence: number };
+type Cluster = { key: string; label: string; rootCause: string; count: number;
+  suggestedAction: string; source: string; confidence: number; exceptionIds?: string[] };
 
 type Explain = { whatTheRuleChecks: string; likelyCause: string; downstreamRisk: string; source: string; model: string | null };
 type Proposal = { id: string; field: string; fromValue: string | null; toValue: string | null;
@@ -21,8 +22,8 @@ type Proposal = { id: string; field: string; fromValue: string | null; toValue: 
 const SEVERITIES = ["BLOCKER", "CRITICAL", "WARNING", "INFO"];
 const STATUSES = ["OPEN", "PENDING_APPROVAL", "RESOLVED", "WAIVED", "REJECTED"];
 
-export default function Queue({ rows, clusters, canAct, canWaive, canExclude }: {
-  tapeId: string; rows: Row[]; clusters: Cluster[]; canAct: boolean; canWaive: boolean; canExclude: boolean;
+export default function Queue({ tapeId, rows, canAct, canWaive, canExclude }: {
+  tapeId: string; rows: Row[]; canAct: boolean; canWaive: boolean; canExclude: boolean;
 }) {
   const router = useRouter();
   const [sev, setSev] = useState<string[]>([]);
@@ -33,19 +34,64 @@ export default function Queue({ rows, clusters, canAct, canWaive, canExclude }: 
   const [showClusters, setShowClusters] = useState(false);
   const [q, setQ] = useState("");
 
+  /**
+   * Clusters are fetched when they are asked for, not when the page loads.
+   *
+   * They were computed during server render, which put a model call on the critical
+   * path of a page whose clusters are hidden behind a toggle nobody had pressed yet.
+   * On a cold cache that made the exception queue take longer to open than a browser's
+   * default navigation timeout — for a result most visits never look at.
+   */
+  const [clusters, setClusters] = useState<Cluster[] | null>(null);
+  const [clustering, setClustering] = useState(false);
+
+  async function toggleClusters() {
+    if (showClusters) { setShowClusters(false); return; }
+    setShowClusters(true);
+    if (clusters || clustering) return;
+    setClustering(true);
+    try {
+      const res = await fetch(`/api/v1/tapes/${tapeId}/cluster`, { method: "POST" });
+      const json = await res.json();
+      setClusters((json.clusters ?? []).map((c: { key: string; label: string; rootCause: string;
+        exceptionIds: string[]; suggestedAction: string; source: string; confidence: number }) => ({
+        key: c.key, label: c.label, rootCause: c.rootCause, count: c.exceptionIds.length,
+        suggestedAction: c.suggestedAction, source: c.source, confidence: c.confidence,
+        exceptionIds: c.exceptionIds,
+      })));
+    } catch {
+      setClusters([]);
+    } finally { setClustering(false); }
+  }
+
+  /**
+   * Cluster membership comes from the cluster itself, not from a key match.
+   *
+   * Rows carry the `clusterKey` the pipeline assigned them, but a model-named cluster
+   * has a key of the model's own choosing — so filtering by key silently matched
+   * nothing as soon as the AI path was live, and the only assertion covering it checked
+   * that the filter *chip* appeared. Every cluster now reports the exception ids it
+   * holds, and this filters by that set.
+   */
+  const clusterIds = useMemo(() => {
+    if (!cluster) return null;
+    const ids = clusters?.find((c) => c.key === cluster)?.exceptionIds;
+    return ids ? new Set(ids) : null;
+  }, [cluster, clusters]);
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return rows.filter((r) =>
       (sev.length === 0 || sev.includes(r.severity)) &&
       (status.length === 0 || status.includes(r.status)) &&
       (!rule || r.ruleCode === rule) &&
-      (!cluster || r.clusterKey === cluster) &&
+      (!cluster || (clusterIds ? clusterIds.has(r.id) : r.clusterKey === cluster)) &&
       (!needle
         || (r.loanId ?? "").toLowerCase().includes(needle)
         || (r.borrowerId ?? "").toLowerCase().includes(needle)
         || (r.field ?? "").toLowerCase().includes(needle)
         || (r.observed ?? "").toLowerCase().includes(needle)));
-  }, [rows, sev, status, rule, cluster, q]);
+  }, [rows, sev, status, rule, cluster, clusterIds, q]);
 
   const ruleCodes = useMemo(() => [...new Set(rows.map((r) => r.ruleCode))].sort(), [rows]);
   const toggle = (list: string[], set: (v: string[]) => void, v: string) =>
@@ -84,13 +130,27 @@ export default function Queue({ rows, clusters, canAct, canWaive, canExclude }: 
             {ruleCodes.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </label>
-        <button className="btn btn-sm ml-auto" onClick={() => setShowClusters((v) => !v)}>
-          {showClusters ? "Hide root causes" : "Group by root cause"}
+        <button className="btn btn-sm ml-auto" onClick={toggleClusters} disabled={clustering}>
+          {clustering ? "Finding root causes…" : showClusters ? "Hide root causes" : "Group by root cause"}
         </button>
         <span className="mono text-xs text-muted tnum">{filtered.length} shown</span>
       </div>
 
-      {showClusters ? (
+      {showClusters && clustering ? (
+        <div className="card p-5 flex flex-col gap-2.5 fadein" role="status" aria-live="polite">
+          <span className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent livepulse" aria-hidden />
+            <span className="eyebrow">Grouping {filtered.length} exceptions by cause</span>
+          </span>
+          <div className="h-1 w-full rounded-full bg-surface2 overflow-hidden"><div className="h-full shimmer w-full" /></div>
+          <p className="text-[0.7rem] text-muted">
+            The counts come from the engine, not the model — it is asked to merge and name the
+            groups, never to decide which exception belongs to which.
+          </p>
+        </div>
+      ) : null}
+
+      {showClusters && !clustering && clusters ? (
         <div className="flex flex-col gap-2">
           {clusters.map((c) => (
             <div key={c.key} className={`card card-hover p-4 flex flex-col gap-2 rise ${cluster === c.key ? "ring-2 ring-accent" : ""}`}>
@@ -117,7 +177,7 @@ export default function Queue({ rows, clusters, canAct, canWaive, canExclude }: 
       {cluster ? (
         <div className="flex items-center gap-2 text-sm">
           <span className="chip bg-brasssoft text-brass">root cause filter</span>
-          <span className="text-ink2">{clusters.find((c) => c.key === cluster)?.label ?? cluster}</span>
+          <span className="text-ink2">{clusters?.find((c) => c.key === cluster)?.label ?? cluster}</span>
           <button className="btn btn-sm" onClick={() => setCluster(null)}>clear</button>
         </div>
       ) : null}

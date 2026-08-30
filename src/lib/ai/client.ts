@@ -96,6 +96,20 @@ type Raw = { text: string; tokensIn: number; tokensOut: number; refused?: boolea
 
 class BadSchemaError extends Error {}
 class AuthError extends Error {}
+class TimeoutError extends Error {}
+
+/**
+ * How long to wait for a model before giving up and answering deterministically.
+ *
+ * `fetch` has no default timeout, so a provider that accepts the connection and then
+ * stalls holds the request open indefinitely — the page spins, the user sees nothing,
+ * and the deterministic twin that exists precisely for this never runs. A free tier
+ * under load is exactly where that happens.
+ *
+ * Generous enough that a slow-but-working call still succeeds, short enough that a
+ * person waiting on a screen gets an answer.
+ */
+const REQUEST_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS ?? 45000);
 class RateLimitError extends Error {
   constructor(message: string, readonly retryAfterMs: number | null) { super(message); }
 }
@@ -129,14 +143,27 @@ async function callOpenAiShaped(p: ResolvedProvider, c: Call, useSchema: boolean
       : { type: "json_object" };
   }
 
-  const res = await fetch(`${p.baseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      ...(p.apiKey ? { authorization: `Bearer ${p.apiKey}` } : {}),
-    },
-    body: JSON.stringify(body),
-  });
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), REQUEST_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(`${p.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...(p.apiKey ? { authorization: `Bearer ${p.apiKey}` } : {}),
+      },
+      body: JSON.stringify(body),
+      signal: abort.signal,
+    });
+  } catch (err) {
+    if (abort.signal.aborted) {
+      throw new TimeoutError(`${p.label} did not respond within ${REQUEST_TIMEOUT_MS / 1000}s`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 
   if (!res.ok) {
     const detail = (await res.text()).slice(0, 400);
@@ -281,10 +308,32 @@ export async function callModel<T>(
         attempt--;
         continue;
       }
+      if (err instanceof TimeoutError) {
+        debug(job, err.message);
+        return {
+          ok: false,
+          reason: `${err.message}. The deterministic answer is shown instead.`,
+          promptHash, promptText,
+        };
+      }
       if (err instanceof RateLimitError) {
-        if (err.retryAfterMs !== null && attempt === 0) {
+        /**
+         * Do not wait out a rate limit on a request someone is watching.
+         *
+         * This used to sleep for the server's `retry-after` — up to twenty seconds —
+         * and try again. On a free tier that is a common path, not a rare one, and it
+         * turned "the model is busy" into a page that hangs for the better part of a
+         * minute before showing an answer the deterministic twin could have given
+         * instantly. The twin exists precisely so that a busy or absent model costs
+         * quality, not availability; making the user wait for the model anyway gives up
+         * the only thing the fallback was for.
+         *
+         * A very short retry is still worth taking, because a sub-second burst limit
+         * clears before anyone notices.
+         */
+        if (err.retryAfterMs !== null && err.retryAfterMs <= 2000 && attempt === 0) {
           await new Promise((r) => setTimeout(r, err.retryAfterMs!));
-          attempt--;                // one patient retry, then give up honestly
+          attempt--;
           continue;
         }
         debug(job, `rate limited: ${err.message}`);

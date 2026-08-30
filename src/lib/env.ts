@@ -10,6 +10,7 @@ const Env = z.object({
   AI_API_KEY: z.string().optional().default(""),
   AI_MODEL: z.string().optional().default(""),
   AI_BASE_URL: z.string().optional().default(""),
+  AI_TIMEOUT_MS: z.coerce.number().int().positive().optional().default(45000),
   // kept so an instance configured before providers existed still boots unchanged
   ANTHROPIC_API_KEY: z.string().optional().default(""),
   ANTHROPIC_MODEL: z.string().optional().default(""),
