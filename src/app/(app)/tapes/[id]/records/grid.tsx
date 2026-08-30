@@ -45,7 +45,7 @@ export default function RecordGrid({ rows }: { rows: Row[] }) {
             <thead><tr>{COLS.map((c) => <th key={c}>{c}</th>)}<th>Status</th><th>Hash</th></tr></thead>
             <tbody>
               {filtered.slice(0, 400).map((r) => (
-                <tr key={r.id} className="cursor-pointer" onClick={() => open(r.id)}>
+                <tr key={r.id} className="clickable" onClick={() => open(r.id)}>
                   {COLS.map((c) => (
                     <td key={c} className={`${/Principal|Balance|Rate|Months|Score|daysPastDue/.test(c) ? "tnum text-right mono text-xs" : "text-xs"} whitespace-nowrap`}>
                       {r[c] ?? <span className="text-muted">—</span>}
@@ -63,8 +63,8 @@ export default function RecordGrid({ rows }: { rows: Row[] }) {
       {loading ? <p className="text-sm text-muted">Loading lineage…</p> : null}
 
       {lineage ? (
-        <div className="fixed inset-0 z-30 flex justify-end bg-black/25" onClick={() => setLineage(null)}>
-          <aside className="w-full max-w-2xl h-full bg-surface border-l border-line overflow-auto p-6 flex flex-col gap-5"
+        <div className="fixed inset-0 z-30 flex justify-end bg-black/25 fadein" onClick={() => setLineage(null)}>
+          <aside className="w-full max-w-2xl h-full bg-surface border-l border-line overflow-auto p-6 flex flex-col gap-5 slidein"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between">
               <div>

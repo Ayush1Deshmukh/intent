@@ -122,13 +122,13 @@ describe("propose: Zod gate and JSON Schema agree", () => {
 describe("cluster: Zod gate and JSON Schema agree", () => {
   const one = {
     key: "date-format-mismatch", label: sentence(20), rootCause: sentence(60),
-    exceptionIds: ["a", "b"], suggestedAction: sentence(50), confidence: 0.9,
+    bucketKeys: ["date-format-mismatch", "CON-001"], suggestedAction: sentence(50), confidence: 0.9,
   };
   const cases: [string, Json][] = [
     ["a single cluster", { clusters: [one] }],
     ["no clusters at all", { clusters: [] }],
     ["more clusters than allowed", { clusters: Array(9).fill(one) }],
-    ["a cluster with no exception ids", { clusters: [{ ...one, exceptionIds: [] }] }],
+    ["a cluster with no bucket keys", { clusters: [{ ...one, bucketKeys: [] }] }],
     ["a label that is too short", { clusters: [{ ...one, label: "hi" }] }],
     ["confidence out of range", { clusters: [{ ...one, confidence: 2 }] }],
   ];

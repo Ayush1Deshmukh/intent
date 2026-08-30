@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ReactNode } from "react";
+import { CountUp } from "./motion";
 
 export function Chip({ children, tone = "accent" }: { children: ReactNode; tone?: "accent" | "brass" | "ok" | "warn" | "crit" | "muted" }) {
   const map = {
@@ -14,11 +15,20 @@ export function SeverityChip({ severity }: { severity: string }) {
   return <span className={`chip sev-${severity}`}>{severity.toLowerCase()}</span>;
 }
 
-export function Stat({ label, value, sub, tone }: { label: string; value: ReactNode; sub?: ReactNode; tone?: string }) {
+/**
+ * A headline figure. Pass `count` (with optional `decimals`/`suffix`) and it counts
+ * up on mount; pass `value` for anything that is not a plain number.
+ */
+export function Stat({ label, value, count, decimals, suffix, sub, tone }: {
+  label: string; value?: ReactNode; count?: number; decimals?: number; suffix?: string;
+  sub?: ReactNode; tone?: string;
+}) {
   return (
-    <div className="card p-4 flex flex-col gap-1">
+    <div className="card card-hover p-4 flex flex-col gap-1">
       <span className="eyebrow">{label}</span>
-      <span className="text-2xl font-serif font-semibold tnum" style={tone ? { color: tone } : undefined}>{value}</span>
+      <span className="text-2xl font-serif font-semibold tnum" style={tone ? { color: tone } : undefined}>
+        {count !== undefined ? <CountUp value={count} decimals={decimals} suffix={suffix} /> : value}
+      </span>
       {sub ? <span className="text-xs text-muted">{sub}</span> : null}
     </div>
   );
@@ -35,8 +45,13 @@ export function SeverityBar({ counts }: { counts: Record<string, number> }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-surface2">
-        {seg.map((s) => (counts[s.k] ? (
-          <div key={s.k} style={{ width: `${(counts[s.k] / total) * 100}%`, background: s.c }} title={`${s.k} ${counts[s.k]}`} />
+        {seg.map((s, i) => (counts[s.k] ? (
+          <div key={s.k} className="growx"
+            style={{
+              width: `${(counts[s.k] / total) * 100}%`, background: s.c,
+              animationDelay: `${0.08 * i}s`,
+            }}
+            title={`${s.k} ${counts[s.k]}`} />
         ) : null))}
       </div>
       <div className="flex flex-wrap gap-3 text-xs text-muted">
@@ -53,7 +68,7 @@ export function SeverityBar({ counts }: { counts: Record<string, number> }) {
 
 export function Empty({ title, hint }: { title: string; hint?: string }) {
   return (
-    <div className="card p-10 text-center flex flex-col gap-2">
+    <div className="card p-10 text-center flex flex-col gap-2 rise">
       <p className="font-serif text-lg">{title}</p>
       {hint ? <p className="text-sm text-muted max-w-md mx-auto">{hint}</p> : null}
     </div>

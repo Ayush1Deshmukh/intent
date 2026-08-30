@@ -76,7 +76,7 @@ export default function Queue({ rows, clusters, canAct, canWaive, canExclude }: 
       {showClusters ? (
         <div className="flex flex-col gap-2">
           {clusters.map((c) => (
-            <div key={c.key} className={`card p-4 flex flex-col gap-2 ${cluster === c.key ? "ring-2 ring-accent" : ""}`}>
+            <div key={c.key} className={`card card-hover p-4 flex flex-col gap-2 rise ${cluster === c.key ? "ring-2 ring-accent" : ""}`}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex flex-col gap-1">
                   <span className="flex items-center gap-2">
@@ -161,8 +161,8 @@ function Drawer({ row, canAct, canWaive, canExclude, onClose }: {
   }
 
   return (
-    <div className="fixed inset-0 z-30 flex justify-end bg-black/25" onClick={onClose}>
-      <aside className="w-full max-w-xl h-full bg-surface border-l border-line overflow-auto p-6 flex flex-col gap-5"
+    <div className="fixed inset-0 z-30 flex justify-end bg-black/25 fadein" onClick={onClose}>
+      <aside className="w-full max-w-xl h-full bg-surface border-l border-line overflow-auto p-6 flex flex-col gap-5 slidein"
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">

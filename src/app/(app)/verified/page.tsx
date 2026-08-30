@@ -33,7 +33,7 @@ export default async function VerifiedPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 rise">
         <span className="eyebrow">Zone 3 · immutable ledger</span>
         <h1 className="text-2xl font-semibold">Verified records</h1>
         <p className="text-sm text-ink2 max-w-prose">

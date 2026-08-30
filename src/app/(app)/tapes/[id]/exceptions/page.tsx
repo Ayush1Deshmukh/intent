@@ -26,12 +26,12 @@ export default async function ExceptionsPage({ params }: { params: Promise<{ id:
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 rise">
         <Link href={`/tapes/${id}`} className="eyebrow no-underline">← Tape</Link>
         <h1 className="text-2xl font-semibold">Exception queue</h1>
       </div>
 
-      <div className="card p-4"><SeverityBar counts={counts.bySeverity} /></div>
+      <div className="card p-4 rise"><SeverityBar counts={counts.bySeverity} /></div>
 
       <Queue
         tapeId={id}

@@ -112,13 +112,16 @@ export async function proposeFix(exceptionId: string) {
 
 /* --------------------------------------------------------------- 3 CLUSTER */
 
-const CLUSTER_SYSTEM = `You group loan-data exceptions by ROOT CAUSE, not by rule.
+const CLUSTER_SYSTEM = `You name the ROOT CAUSES behind a set of loan-data exceptions.
 
-You are given open exceptions from one tape, compacted. Return 3 to 8 clusters.
+You are given BUCKETS, not individual rows. Each bucket is a group the system has
+already formed, with an exact count. Your job is to merge the buckets that share one
+underlying cause and to name that cause in a sentence an analyst would act on.
+
 A good cluster names something that happened to the FILE - a column written in two
-date orderings, a rate column left in decimal form, a servicer feed that lags -
-so that one decision resolves many rows. Put every exception id you are given into
-at most one cluster; you may leave genuinely unrelated ones out.
+date orderings, a rate column left in decimal form, a servicer feed that lags - so
+that one decision resolves many rows. Return 3 to 8 clusters. Put each bucket key in
+at most one cluster; leave out any you cannot place. Use the keys exactly as given.
 
 Return JSON only.`;
 
@@ -128,6 +131,23 @@ export type Cluster = {
   source: "AI" | "RULE" | "CACHE";
 };
 
+/**
+ * Group the open exceptions by root cause.
+ *
+ * The division of labour matters here, and an earlier version got it wrong. The model
+ * is asked to name causes and merge buckets — which is what it is good at — and is
+ * never asked to assign individual exceptions to them. Membership is computed from the
+ * deterministic buckets, so **every count is exact and complete**.
+ *
+ * The earlier version sent the model a 120-row sample of the queue and used its row
+ * assignments directly. It ran, and the answers read well, but a cause that actually
+ * affected 45 loans was reported as affecting 5 — because 5 was all the model had been
+ * shown. A confident, well-written, wrong number is worse than a plain one, and a
+ * reviewer prioritising by count would have been misled by it.
+ *
+ * Sending buckets instead also makes the prompt tiny: about thirty rows rather than a
+ * hundred and twenty, which is what lets it run inside a free tier's per-minute budget.
+ */
 export async function clusterExceptions(tapeId: string): Promise<Cluster[]> {
   const open = await db.select({ exc: exceptions, rule: rules })
     .from(exceptions).innerJoin(rules, eq(rules.id, exceptions.ruleId))
@@ -135,13 +155,15 @@ export async function clusterExceptions(tapeId: string): Promise<Cluster[]> {
 
   if (open.length === 0) return [];
 
-  // deterministic grouping — the fallback, and on the demo tape it finds the date cluster
+  // The buckets. `clusterKey` is set by the pipeline where it already knows two rules
+  // share a cause (the date orderings); otherwise a bucket is one rule.
   const groups = new Map<string, typeof open>();
   for (const row of open) {
     const key = row.exc.clusterKey ?? row.rule.code;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(row);
   }
+
   const LABELS: Record<string, { label: string; cause: string; action: string }> = {
     "date-format-mismatch": {
       label: "Dates arrived in two different orderings",
@@ -154,6 +176,7 @@ export async function clusterExceptions(tapeId: string): Promise<Cluster[]> {
       action: "Adopt the servicer figure where its report date is newer, one loan at a time, with the difference shown.",
     },
   };
+
   const deterministic: Cluster[] = [...groups.entries()]
     .sort((a, b) => b[1].length - a[1].length)
     .slice(0, 8)
@@ -173,18 +196,50 @@ export async function clusterExceptions(tapeId: string): Promise<Cluster[]> {
 
   if (!aiEnabled()) return deterministic;
 
-  const compact = open.slice(0, 300).map((r) => ({
-    id: r.exc.id, rule: r.rule.code, field: r.exc.field, observed: (r.exc.observed ?? "").slice(0, 60),
-  }));
-  const user = JSON.stringify({ exceptions: compact, ruleDescriptions:
-    Object.fromEntries([...new Set(open.map((o) => o.rule.code))].map((c) => [c, RULE_BY_CODE.get(c)?.description ?? ""])) });
+  // one line per bucket: the key, how many loans it holds, the rule behind it, and a
+  // single example of what the values actually look like
+  const buckets = [...groups.entries()]
+    .sort((a, b) => b[1].length - a[1].length)
+    .map(([key, rows]) => ({
+      key,
+      count: rows.length,
+      rule: rows[0].rule.code,
+      field: rows[0].exc.field,
+      description: RULE_BY_CODE.get(rows[0].rule.code)?.description ?? rows[0].rule.description,
+      example: (rows[0].exc.observed ?? "").slice(0, 48),
+    }));
+
+  const user = JSON.stringify({ buckets });
 
   const res = await callModel("cluster", CLUSTER_SYSTEM, user, ClusterOut);
   if (!res.ok) return deterministic;
-  const valid = new Set(open.map((o) => o.exc.id));
-  return res.data.clusters
-    .map((c) => ({ ...c, exceptionIds: c.exceptionIds.filter((id) => valid.has(id)), source: res.source }))
-    .filter((c) => c.exceptionIds.length > 0);
+
+  const seen = new Set<string>();
+  const clusters = res.data.clusters
+    .map((c) => {
+      // expand the bucket keys back to every exception they hold — the model never
+      // sees, and never has to be trusted with, individual rows
+      const ids: string[] = [];
+      for (const key of c.bucketKeys) {
+        if (seen.has(key)) continue;          // one bucket, one cluster
+        const rows = groups.get(key);
+        if (!rows) continue;                  // a key the model invented
+        seen.add(key);
+        ids.push(...rows.map((r) => r.exc.id));
+      }
+      return {
+        key: c.key, label: c.label, rootCause: c.rootCause,
+        suggestedAction: c.suggestedAction, confidence: c.confidence,
+        exceptionIds: ids, source: res.source,
+      };
+    })
+    .filter((c) => c.exceptionIds.length > 0)
+    .sort((a, b) => b.exceptionIds.length - a.exceptionIds.length);
+
+  // Anything the model left out still has to be actionable, so unplaced buckets come
+  // back on their deterministic labels rather than vanishing from the queue.
+  const leftovers = deterministic.filter((d) => !seen.has(d.key));
+  return [...clusters, ...leftovers].slice(0, 8);
 }
 
 /* ---------------------------------------------------------------- 4 AUTHOR */
@@ -216,5 +271,14 @@ If the sentence cannot be expressed with these fields and operators, return
 export async function authorRule(sentence: string) {
   const res = await callModel("author", AUTHOR_SYSTEM, sentence, AuthorOut);
   if (res.ok) return { ...res.data, source: res.source, model: res.model };
-  return { error: `This instance could not compile that sentence into a rule (${res.reason}). Name the field and the threshold explicitly — for example "flag loans where creditScore is under 600".` };
+
+  // AuthorOut is a union of "a rule" and "an explanation of why not", and a Zod union
+  // failure reports only "Invalid input" with no path — useless to a person deciding
+  // whether the model misbehaved or the sentence was genuinely unanswerable. Say which.
+  const why = /Invalid input/.test(res.reason)
+    ? "the model's reply matched neither a rule nor a refusal"
+    : res.reason;
+  return {
+    error: `This instance could not compile that sentence into a rule (${why}). Name the field and the threshold explicitly — for example "flag loans where creditScore is under 600".`,
+  };
 }

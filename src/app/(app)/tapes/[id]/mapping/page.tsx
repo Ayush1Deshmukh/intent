@@ -74,6 +74,7 @@ export default async function MappingPage({ params }: { params: Promise<{ id: st
             : null,
         }))}
         fields={CANONICAL_FIELDS.map((f) => ({ value: f, label: FIELD_META[f].label, required: FIELD_META[f].required }))}
+        rowCount={files.find((f) => f.kind === "LOAN_TAPE")?.rowCount ?? files[0]?.rowCount ?? 0}
       />
     </div>
   );

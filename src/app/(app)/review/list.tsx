@@ -33,8 +33,9 @@ export default function ReviewList({ items }: { items: Item[] }) {
 
   return (
     <div className="flex flex-col gap-3">
-      {items.map((it) => (
-        <article key={it.id} className="card p-5 flex flex-col gap-4">
+      {items.map((it, i) => (
+        <article key={it.id} className="card card-hover p-5 flex flex-col gap-4 rise"
+          style={{ animationDelay: `${Math.min(i, 6) * 0.05}s` }}>
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex flex-col gap-1">
               <span className="flex items-center gap-2">

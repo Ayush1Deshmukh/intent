@@ -1,6 +1,7 @@
 "use client";
 import { useActionState, useState } from "react";
 import { confirmMappingAction } from "@/app/actions";
+import PipelineRunning from "./running";
 
 type Row = {
   id: string; sourceHeader: string; canonicalField: string | null; method: string;
@@ -18,10 +19,11 @@ const METHOD_WHY: Record<string, string> = {
   MANUAL: "set by hand",
 };
 
-export default function MappingForm({ tapeId, rows, fields }: {
+export default function MappingForm({ tapeId, rows, fields, rowCount }: {
   tapeId: string;
   rows: Row[];
   fields: { value: string; label: string; required: boolean }[];
+  rowCount: number;
 }) {
   const [state, action, pending] = useActionState(confirmMappingAction, null as { error?: string } | null);
   const [values, setValues] = useState<Record<string, string>>(
@@ -32,8 +34,9 @@ export default function MappingForm({ tapeId, rows, fields }: {
   return (
     <form action={action} className="flex flex-col gap-4">
       <input type="hidden" name="tapeId" value={tapeId} />
+      {pending ? <PipelineRunning rows={rowCount} /> : null}
 
-      <div className="card overflow-hidden">
+      <div className="card overflow-hidden rise">
         <table className="dtable">
           <thead>
             <tr>

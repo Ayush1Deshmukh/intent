@@ -84,3 +84,61 @@ input, select, textarea {
 }
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--color-accent); outline-offset: 1px; }
 a { color: var(--color-accent); }
+
+/* ---------------------------------------------------------------- motion ---
+   Four things move in this application, and each earns it:
+
+     rise      content arriving, so a dense screen resolves instead of appearing
+     grow      a severity bar, so the proportions read as a measurement being taken
+     sweep     work in progress, on the two operations that genuinely take seconds
+     pulse     a live check running, so "verifying" looks different from "verified"
+
+   Nothing loops for decoration and nothing moves more than 8px. The whole block
+   is disabled under prefers-reduced-motion — including the entrance animations,
+   which start at opacity 0 and must therefore be reset, not merely stopped. */
+
+@keyframes rise   { from { opacity: 0; transform: translateY(8px);  } to { opacity: 1; transform: none; } }
+@keyframes fade   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes growx  { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes sweep  { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@keyframes slidein{ from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes softpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes tick   { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+
+.rise      { animation: rise 0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.fadein    { animation: fade 0.3s ease both; }
+.slidein   { animation: slidein 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.pop       { animation: tick 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.growx     { transform-origin: left center; animation: growx 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.livepulse { animation: softpulse 1.4s ease-in-out infinite; }
+
+/* Stagger, so a row of cards resolves left to right rather than all at once. */
+.stagger > * { animation: rise 0.42s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.stagger > *:nth-child(1) { animation-delay: 0.00s; }
+.stagger > *:nth-child(2) { animation-delay: 0.05s; }
+.stagger > *:nth-child(3) { animation-delay: 0.10s; }
+.stagger > *:nth-child(4) { animation-delay: 0.15s; }
+.stagger > *:nth-child(5) { animation-delay: 0.20s; }
+.stagger > *:nth-child(6) { animation-delay: 0.25s; }
+
+/* The shimmer used while a long operation runs. */
+.shimmer {
+  background: linear-gradient(90deg,
+    var(--color-surface2) 0%, var(--color-accentsoft) 20%, var(--color-surface2) 40%);
+  background-size: 200% 100%;
+  animation: sweep 1.6s linear infinite;
+}
+
+.btn, .card, table.dtable tbody tr { transition: background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease; }
+.card-hover:hover { box-shadow: 0 2px 14px -6px rgb(14 26 29 / 0.18); border-color: var(--color-line2); }
+table.dtable tbody tr.clickable { cursor: pointer; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, .fadein, .slidein, .pop, .growx, .livepulse, .shimmer, .stagger > * {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    background-position: 0 0 !important;
+  }
+  .btn, .card, table.dtable tbody tr { transition: none; }
+}

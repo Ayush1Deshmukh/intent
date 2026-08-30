@@ -22,7 +22,8 @@ export const ClusterOut = z.object({
     key: z.string().min(1).max(60),
     label: z.string().min(5).max(160),
     rootCause: z.string().min(5).max(400),
-    exceptionIds: z.array(z.string()).min(1),
+    /** bucket keys, not exception ids — membership is computed, never taken from the model */
+    bucketKeys: z.array(z.string()).min(1),
     suggestedAction: z.string().max(300),
     confidence: z.number().min(0).max(1),
   })).min(1).max(8),
@@ -95,12 +96,12 @@ export const CLUSTER_JSON_SCHEMA = {
       type: "array", minItems: 1, maxItems: 8,
       items: {
         type: "object", additionalProperties: false,
-        required: ["key", "label", "rootCause", "exceptionIds", "suggestedAction", "confidence"],
+        required: ["key", "label", "rootCause", "bucketKeys", "suggestedAction", "confidence"],
         properties: {
           key: str(1, 60),
           label: str(5, 160),
           rootCause: str(5, 400),
-          exceptionIds: { type: "array", minItems: 1, items: { type: "string" } },
+          bucketKeys: { type: "array", minItems: 1, items: { type: "string" } },
           suggestedAction: { type: "string", maxLength: 300 },
           confidence: { type: "number", minimum: 0, maximum: 1 },
         },

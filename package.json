@@ -22,7 +22,8 @@
     "demo:reviewed": "tsx --env-file=.env scripts/seed-review.ts",
     "ai:models": "tsx --env-file=.env scripts/ai-models.ts",
     "setup": "tsx --env-file=.env scripts/setup.ts",
-    "build:setup": "esbuild scripts/setup.ts --bundle --platform=node --target=node22 --format=cjs --outfile=.next/standalone/setup.cjs --external:pg-native --external:cloudflare:sockets --log-level=warning"
+    "build:setup": "esbuild scripts/setup.ts --bundle --platform=node --target=node22 --format=cjs --outfile=.next/standalone/setup.cjs --external:pg-native --external:cloudflare:sockets --log-level=warning",
+    "ui:shots": "node scripts/ui/shots.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",

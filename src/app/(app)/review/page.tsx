@@ -27,7 +27,7 @@ export default async function ReviewPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 rise">
         <span className="eyebrow">Maker-checker</span>
         <h1 className="text-2xl font-semibold">Pending changes</h1>
         <p className="text-sm text-ink2 max-w-prose">

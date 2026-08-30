@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db, tapes, exceptions, rules, loanRecords, attestations, sourceFiles, auditEvents } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { can } from "@/lib/policy";
 import { tapeCounts } from "@/lib/service/review";
 import { Chip, SeverityBar, Stat } from "@/components/ui";
 import IntegrityPanel from "./integrity";
+import Zones from "./zones";
 import AttestButton from "./attest-button";
 
 export const dynamic = "force-dynamic";
@@ -34,12 +35,15 @@ export default async function TapePage({ params }: { params: Promise<{ id: strin
     .groupBy(rules.code, rules.name, rules.severity)
     .orderBy(desc(sql`count(*)`)).limit(6);
 
+  const [{ excludedCount }] = await db.select({ excludedCount: sql<number>`count(*)::int` })
+    .from(loanRecords).where(and(eq(loanRecords.tapeId, id), eq(loanRecords.verificationStatus, "REJECTED")));
+
   const clean = records - affected;
   const pct = records ? ((clean / records) * 100).toFixed(1) : "0";
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div className="flex items-start justify-between gap-4 flex-wrap rise">
         <div className="flex flex-col gap-1">
           <Link href="/tapes" className="eyebrow no-underline">← Tapes</Link>
           <h1 className="text-2xl font-semibold">{tape.name}</h1>
@@ -56,16 +60,22 @@ export default async function TapePage({ params }: { params: Promise<{ id: strin
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Rows" value={records} sub={`${files.reduce((a, f) => a + f.rowCount, 0)} rows across all sources`} />
-        <Stat label="Exceptions" value={counts.total} sub={`${affected} rows affected`} />
-        <Stat label="Clean rows" value={`${pct}%`} sub={`${clean} of ${records} carry no exception`} />
-        <Stat label="Gating open" value={counts.openGating}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 stagger">
+        <Stat label="Rows" count={records} sub={`${files.reduce((a, f) => a + f.rowCount, 0)} rows across all sources`} />
+        <Stat label="Exceptions" count={counts.total} sub={`${affected} rows affected`} />
+        <Stat label="Clean rows" count={Number(pct)} decimals={1} suffix="%" sub={`${clean} of ${records} carry no exception`} />
+        <Stat label="Gating open" count={counts.openGating}
           tone={counts.openGating > 0 ? "var(--color-crit)" : "var(--color-ok)"}
           sub={counts.openGating > 0 ? "sign-off is blocked" : "eligible for sign-off"} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+      <Zones
+        files={files.map((f) => ({ kind: f.kind, filename: f.filename, sha256: f.sha256, rowCount: f.rowCount }))}
+        rows={records} exceptions={counts.total} cleanRows={clean}
+        sealed={att?.recordCount ?? 0} excluded={excludedCount}
+      />
+
+      <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr] lg:items-start stagger">
         <section className="card p-5 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold">Severity</h2>
@@ -92,6 +102,7 @@ export default async function TapePage({ params }: { params: Promise<{ id: strin
         <IntegrityPanel tapeId={id} attested={!!att} merkleRoot={att?.merkleRoot ?? null}
           recordCount={att?.recordCount ?? 0} signer={att?.signerEmail ?? null} />
       </div>
+
     </div>
   );
 }

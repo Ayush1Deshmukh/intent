@@ -26,6 +26,18 @@ export type Provider = {
   keyUrl: string;
   /** Whether the server accepts `response_format: {type:"json_schema"}`. */
   jsonSchema: boolean;
+  /**
+   * Whether the server accepts `reasoning_effort`. On a reasoning model this is
+   * the difference between a request that fits a free-tier per-minute budget and
+   * one that does not — it roughly halves completion tokens on short JSON answers.
+   */
+  reasoningEffort: boolean;
+  /**
+   * Tokens-per-minute ceiling on the provider's free tier, where it is low enough
+   * to matter. Requests are sized against it, and it is quoted back in the error
+   * when one bounces, because "413" on its own sends you looking in the wrong place.
+   */
+  freeTpm?: number;
 };
 
 export const PROVIDERS: Record<string, Provider> = {
@@ -38,6 +50,8 @@ export const PROVIDERS: Record<string, Provider> = {
     free: "free tier, no credit card — roughly 30 requests/minute and 14,400/day",
     keyUrl: "https://console.groq.com/keys",
     jsonSchema: true,
+    reasoningEffort: true,
+    freeTpm: 8000,
   },
   gemini: {
     id: "gemini",
@@ -48,6 +62,7 @@ export const PROVIDERS: Record<string, Provider> = {
     free: "free tier, no credit card — daily request caps vary by model",
     keyUrl: "https://aistudio.google.com/apikey",
     jsonSchema: true,
+    reasoningEffort: false,
   },
   openrouter: {
     id: "openrouter",
@@ -58,6 +73,7 @@ export const PROVIDERS: Record<string, Provider> = {
     free: "models with a :free suffix cost nothing; rate limits are tight",
     keyUrl: "https://openrouter.ai/keys",
     jsonSchema: false,
+    reasoningEffort: false,
   },
   cerebras: {
     id: "cerebras",
@@ -68,6 +84,7 @@ export const PROVIDERS: Record<string, Provider> = {
     free: "free tier, no credit card",
     keyUrl: "https://cloud.cerebras.ai/",
     jsonSchema: true,
+    reasoningEffort: false,
   },
   ollama: {
     id: "ollama",
@@ -78,6 +95,7 @@ export const PROVIDERS: Record<string, Provider> = {
     free: "free and offline, but it will not run on a serverless deployment",
     keyUrl: "https://ollama.com/download",
     jsonSchema: false,
+    reasoningEffort: false,
   },
   anthropic: {
     id: "anthropic",
@@ -88,6 +106,7 @@ export const PROVIDERS: Record<string, Provider> = {
     free: "paid — no free tier",
     keyUrl: "https://console.anthropic.com/settings/keys",
     jsonSchema: true,
+    reasoningEffort: false,
   },
 };
 
@@ -114,7 +133,7 @@ export function resolveProvider(env: NodeJS.ProcessEnv = process.env): ResolvedP
     return {
       id, label: id, kind: "openai", baseUrl: env.AI_BASE_URL.replace(/\/+$/, ""),
       defaultModel: env.AI_MODEL, free: "unknown", keyUrl: "", jsonSchema: false,
-      apiKey, model: env.AI_MODEL,
+      reasoningEffort: false, apiKey, model: env.AI_MODEL,
     };
   }
 

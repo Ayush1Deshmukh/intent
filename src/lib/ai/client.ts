@@ -18,17 +18,51 @@ type Effort = "low" | "medium" | "high" | "xhigh" | "max";
  * Per job: how much room the model gets, how hard it should think, and the JSON
  * schema the server should constrain it to.
  *
- * `maxTokens` has to cover reasoning as well as the answer — on current models
- * thinking is on by default and is billed against the same ceiling, so the old
- * 500-token caps would have truncated mid-object. `author` deliberately has no
- * schema: its output carries a rule expression from an open, recursive DSL, and
- * pinning that into a JSON Schema would freeze the grammar in two places.
+ * The two token budgets are not a style choice. On Anthropic models thinking is on
+ * by default and is billed against the same ceiling, so the answer needs thousands
+ * of tokens of headroom. On a free OpenAI-shaped tier the ceiling is the *constraint*:
+ * Groq's free tier allows 8,000 tokens per minute counting prompt plus requested
+ * completion, so asking for 8,000 is rejected outright with a 413 before the model
+ * ever runs. These jobs emit a few hundred tokens of JSON; sizing for that is both
+ * correct and what makes the free tier usable.
+ *
+ * `author` deliberately has no schema: its output carries a rule expression from an
+ * open, recursive DSL, and pinning that into a JSON Schema would freeze the grammar
+ * in two places.
  */
-const JOB: Record<AiJob, { maxTokens: number; effort: Effort; schema?: Record<string, unknown> }> = {
-  explain: { maxTokens: 4000, effort: "low", schema: EXPLAIN_JSON_SCHEMA },
-  propose: { maxTokens: 6000, effort: "medium", schema: PROPOSE_JSON_SCHEMA },
-  cluster: { maxTokens: 12000, effort: "medium", schema: CLUSTER_JSON_SCHEMA },
-  author: { maxTokens: 8000, effort: "medium" },
+type JobSpec = {
+  /** headroom for reasoning plus answer, on a model that always reasons */
+  anthropicTokens: number;
+  /** the answer, on a model that does not — sized to fit a free per-minute budget */
+  openaiTokens: number;
+  effort: Effort;
+  schema?: Record<string, unknown>;
+};
+
+const JOB: Record<AiJob, JobSpec> = {
+  explain: { anthropicTokens: 4000, openaiTokens: 700, effort: "low", schema: EXPLAIN_JSON_SCHEMA },
+  propose: { anthropicTokens: 6000, openaiTokens: 900, effort: "medium", schema: PROPOSE_JSON_SCHEMA },
+  // low effort, deliberately: this is classification, not reasoning, and at medium
+  // the scratchpad ate the output budget and the server rejected an empty generation
+  cluster: { anthropicTokens: 12000, openaiTokens: 3500, effort: "low", schema: CLUSTER_JSON_SCHEMA },
+  author: { anthropicTokens: 8000, openaiTokens: 1200, effort: "medium" },
+};
+
+/** low / medium / high is the whole vocabulary the OpenAI-shaped servers accept. */
+const REASONING_EFFORT: Record<Effort, "low" | "medium" | "high"> = {
+  low: "low", medium: "medium", high: "high", xhigh: "high", max: "high",
+};
+
+/**
+ * Why the last call fell back, on stderr, when AI_DEBUG=true.
+ *
+ * The whole design here is that a failed model call degrades silently to the
+ * deterministic twin — which is right for a user and wrong for whoever is trying to
+ * work out why the model is not answering. Without this, diagnosing a fallback meant
+ * re-implementing the request by hand in a throwaway script. Twice.
+ */
+const debug = (job: AiJob, reason: string) => {
+  if (process.env.AI_DEBUG === "true") console.error(`\x1b[2m[ai:${job}] fell back — ${reason}\x1b[0m`);
 };
 
 export const provider = (): ResolvedProvider | null => resolveProvider();
@@ -62,6 +96,9 @@ type Raw = { text: string; tokensIn: number; tokensOut: number; refused?: boolea
 
 class BadSchemaError extends Error {}
 class AuthError extends Error {}
+class RateLimitError extends Error {
+  constructor(message: string, readonly retryAfterMs: number | null) { super(message); }
+}
 
 /* ------------------------------------------------------------ OpenAI-shaped */
 
@@ -83,6 +120,9 @@ async function callOpenAiShaped(p: ResolvedProvider, c: Call, useSchema: boolean
       { role: "user", content: c.user },
     ],
   };
+  // On a reasoning model this roughly halves the tokens spent on a short JSON answer,
+  // which is the difference between fitting a free per-minute budget and not.
+  if (p.reasoningEffort) body.reasoning_effort = REASONING_EFFORT[c.effort];
   if (useSchema && c.schema) {
     body.response_format = p.jsonSchema
       ? { type: "json_schema", json_schema: { name: c.jobName, strict: true, schema: c.schema } }
@@ -101,6 +141,14 @@ async function callOpenAiShaped(p: ResolvedProvider, c: Call, useSchema: boolean
   if (!res.ok) {
     const detail = (await res.text()).slice(0, 400);
     if (res.status === 401 || res.status === 403) throw new AuthError(detail);
+    // 429 is "too many, wait"; 413 on these endpoints is "this one request exceeds
+    // your per-minute token budget", which is a different problem with the same cure
+    // only sometimes — either way, say which it was rather than reporting a number.
+    if (res.status === 429 || res.status === 413) {
+      const header = res.headers.get("retry-after");
+      const retryAfterMs = header ? Math.min(Number(header) * 1000, 20000) : null;
+      throw new RateLimitError(detail, Number.isFinite(retryAfterMs) ? retryAfterMs : null);
+    }
     // A provider that does not know this response_format says so with a 400. Retrying
     // without it is better than losing the feature — the Zod gate still holds.
     if (res.status === 400 && useSchema) throw new BadSchemaError(detail);
@@ -187,9 +235,13 @@ export async function callModel<T>(
     }
   }
 
-  if (!p) return { ok: false, reason: "no model provider is configured on this instance", promptHash, promptText };
+  if (!p) {
+    debug(job, "no model provider is configured on this instance");
+    return { ok: false, reason: "no model provider is configured on this instance", promptHash, promptText };
+  }
 
-  const call: Call = { system, user, maxTokens: cfg.maxTokens, effort: cfg.effort, schema: cfg.schema, jobName: job };
+  const maxTokens = p.kind === "anthropic" ? cfg.anthropicTokens : cfg.openaiTokens;
+  const call: Call = { system, user, maxTokens, effort: cfg.effort, schema: cfg.schema, jobName: job };
   let useSchema = cfg.schema !== undefined;
   let lastError = "";
 
@@ -200,7 +252,10 @@ export async function callModel<T>(
         ? await callAnthropic(p, { ...call, user: attempt === 0 ? user : retryUser(user, lastError) }, useSchema)
         : await callOpenAiShaped(p, { ...call, user: attempt === 0 ? user : retryUser(user, lastError) }, useSchema);
 
-      if (raw.refused) return { ok: false, reason: "the model declined this request", promptHash, promptText };
+      if (raw.refused) {
+        debug(job, "the model declined this request");
+        return { ok: false, reason: "the model declined this request", promptHash, promptText };
+      }
 
       const parsed = schema.safeParse(extractJson(raw.text));
       if (!parsed.success) {
@@ -216,17 +271,34 @@ export async function callModel<T>(
         latencyMs: Date.now() - started };
     } catch (err) {
       if (err instanceof AuthError) {
+        debug(job, `${p.label} rejected the API key: ${err.message}`);
         return { ok: false, reason: `${p.label} rejected the API key on this instance`, promptHash, promptText };
       }
       if (err instanceof BadSchemaError && useSchema) {
+        debug(job, `schema rejected, retrying in prose mode: ${err.message.slice(0, 200)}`);
         useSchema = false;          // retry once in prose-JSON mode; Zod still gates it
         lastError = err.message;
         attempt--;
         continue;
       }
+      if (err instanceof RateLimitError) {
+        if (err.retryAfterMs !== null && attempt === 0) {
+          await new Promise((r) => setTimeout(r, err.retryAfterMs!));
+          attempt--;                // one patient retry, then give up honestly
+          continue;
+        }
+        debug(job, `rate limited: ${err.message}`);
+        const budget = p.freeTpm ? ` This instance is on ${p.label}'s free tier, which allows about ${p.freeTpm.toLocaleString()} tokens a minute.` : "";
+        return {
+          ok: false,
+          reason: `${p.label} rate-limited this request.${budget} The deterministic answer is shown instead.`,
+          promptHash, promptText,
+        };
+      }
       lastError = err instanceof Error ? err.message : String(err);
     }
   }
+  debug(job, lastError || "the model did not return valid output");
   return { ok: false, reason: lastError || "the model did not return valid output", promptHash, promptText };
 }
 

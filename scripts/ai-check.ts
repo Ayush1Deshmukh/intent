@@ -27,6 +27,30 @@ const wrap = (s: string, indent = "    ") =>
 
 let live = 0, fell = 0;
 
+/**
+ * Free tiers meter tokens per minute, and this script deliberately fires every job
+ * back to back — which is not how anyone uses the app, but is exactly how you
+ * rate-limit yourself and then conclude the integration is broken. So it paces.
+ * `AI_CHECK_PACE_MS=0` turns it off on a paid key.
+ */
+const paceMs = process.env.AI_CHECK_PACE_MS !== undefined
+  ? Number(process.env.AI_CHECK_PACE_MS)
+  : (provider()?.freeTpm ? 16000 : 0);
+let paced = false;
+async function pace() {
+  if (!paceMs) return;
+  if (paced) {
+    // A carriage return tidies a terminal and corrupts a log file, so only do it
+    // when there is a terminal to tidy.
+    const tty = process.stdout.isTTY;
+    const msg = `  \x1b[2m…pausing ${paceMs / 1000}s for the per-minute token budget\x1b[0m`;
+    process.stdout.write(tty ? msg + "\r" : msg + "\n");
+    await new Promise((r) => setTimeout(r, paceMs));
+    if (tty) process.stdout.write(" ".repeat(70) + "\r");
+  }
+  paced = true;
+}
+
 async function main() {
   head("configuration");
   const p = provider();
@@ -58,6 +82,7 @@ async function main() {
   if (want("explain")) {
     head("1 · explain");
     for (const { exc, rule } of picks.slice(0, 2)) {
+      await pace();
       const r = await explainException(exc.id);
       if (r.source === "RULE") fell++; else live++;
       kv("rule", `${rule.code}  ${rule.name}`);
@@ -73,6 +98,7 @@ async function main() {
   if (want("propose")) {
     head("2 · propose");
     for (const { exc, rule } of picks.slice(0, 3)) {
+      await pace();
       const p = await proposeFix(exc.id);
       if (!p) { kv(rule.code, "no defensible proposal — correct for some rules"); continue; }
       if (p.source === "RULE") fell++; else live++;
@@ -88,6 +114,7 @@ async function main() {
   /* ------------------------------------------------------------- 3 CLUSTER */
   if (want("cluster")) {
     head("3 · cluster");
+    await pace();
     const clusters = await clusterExceptions(tape.id);
     if (clusters.some((c) => c.source !== "RULE")) live++; else fell++;
     kv("clusters", clusters.length);
@@ -108,6 +135,7 @@ async function main() {
       "Flag loans whose borrower has a suspicious vibe.",   // must be refused, not invented
     ];
     for (const s of sentences) {
+      await pace();
       const r = await authorRule(s);
       line(`\n  \x1b[2m"${s}"\x1b[0m`);
       if ("error" in r && r.error) { line(wrap(`refused: ${r.error}`, "      ")); fell++; continue; }
