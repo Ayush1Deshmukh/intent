@@ -8,7 +8,7 @@ import { recordHash, rowHash } from "@/lib/hash";
 import { parseBuffer, ParsedFile } from "@/lib/ingest/parse";
 import { proposeMappings, runPipeline, SourceKind } from "@/lib/ingest/pipeline";
 import { HeaderMatch } from "@/lib/ingest/map";
-import { CanonicalField } from "@/lib/schema/fields";
+import { CANONICAL_FIELDS, CanonicalField, FIELD_META } from "@/lib/schema/fields";
 import { RuleDef } from "@/lib/rules/catalog";
 import { Session } from "@/lib/auth";
 import { HttpProblem } from "@/lib/problem";
@@ -173,34 +173,36 @@ export async function normalizeAndValidate(session: Session, tapeId: string, asO
 
     for (const [i, row] of result.rows.entries()) {
       const v = row.normalized.values;
-      const draft = {
+      /**
+       * Built from CANONICAL_FIELDS rather than a hand-written list.
+       *
+       * The previous version enumerated every column by name, and when the schema
+       * widened to cover the challenge's full field set, seven of them were simply
+       * never written — the columns existed, the coercion produced values, and the
+       * insert silently dropped them. Nothing failed; the data was just missing.
+       *
+       * The hash contract in `businessFields()` stays hand-written for the opposite
+       * reason: what a signature covers must not widen by accident. Persistence should
+       * store whatever the canonical schema defines. Those are different jobs.
+       */
+      const draft: Record<string, unknown> = {
         tapeId,
         rawRecordId: rawIdByRow.get(row.rowNumber)!,
-        loanId: (v.loanId as string) ?? null,
-        borrowerId: (v.borrowerId as string) ?? null,
-        loanType: (v.loanType as string) ?? null,
-        originationDate: (v.originationDate as string) ?? null,
-        maturityDate: (v.maturityDate as string) ?? null,
-        originalPrincipal: (v.originalPrincipal as string) ?? null,
-        currentBalance: (v.currentBalance as string) ?? null,
-        interestRate: (v.interestRate as string) ?? null,
-        termMonths: (v.termMonths as number) ?? null,
-        paymentAmount: (v.paymentAmount as string) ?? null,
-        paymentStatus: (v.paymentStatus as string) ?? null,
-        daysPastDue: (v.daysPastDue as number) ?? null,
-        borrowerState: (v.borrowerState as string) ?? null,
-        borrowerZip: (v.borrowerZip as string) ?? null,
-        creditScore: (v.creditScore as number) ?? null,
-        appraisedValue: (v.appraisedValue as string) ?? null,
-        servicerId: (v.servicerId as string) ?? null,
-        lastUpdatedAt: v.lastUpdatedAt ? new Date(String(v.lastUpdatedAt)) : null,
-        documentStatus: (v.documentStatus as string) ?? null,
         verificationStatus: "PENDING" as const,
         version: 1,
         recordHash: "",
       };
+      for (const f of CANONICAL_FIELDS) {
+        const value = v[f];
+        if (value === undefined || value === null) { draft[f] = null; continue; }
+        // timestamps are the one kind the driver wants as a Date; dates, money and
+        // rates all stay strings so no float ever touches a monetary column
+        draft[f] = FIELD_META[f].kind === "timestamp" ? new Date(String(value)) : value;
+      }
+
       draft.recordHash = recordHash({ ...draft, id: null, version: 1 });
-      const [rec] = await tx.insert(loanRecords).values(draft).returning({ id: loanRecords.id });
+      const [rec] = await tx.insert(loanRecords)
+        .values(draft as typeof loanRecords.$inferInsert).returning({ id: loanRecords.id });
       recordIdByIndex.set(i, rec.id);
 
       for (const t of row.normalized.transformations) {

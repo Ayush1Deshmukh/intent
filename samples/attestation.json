@@ -1,0 +1,113 @@
+{
+  "id": "mtg4lxtq8e9424c180651b6d",
+  "tapeId": "mtg4lfbj5a2ee041f9de6e0e",
+  "merkleRoot": "5f7afc59d9fb8086d738edd2e91cc045ff10efa2f513aadd1071e8a4452be629",
+  "leaves": [
+    {
+      "hash": "9fb72eafb443c78aa453e9213b481072467df88b0bd6d4fd9899be7b813fd382",
+      "loanId": "LN-000002",
+      "loanRecordId": "mtg4lg7r29be0d3fe84b7b6d"
+    },
+    {
+      "hash": "3c1224883ada97cf56325b06ee74b1cd88215c5b64f00363bb46707bfcfd826a",
+      "loanId": "LN-000003",
+      "loanRecordId": "mtg4lg7wfcd853a830d09abc"
+    },
+    {
+      "hash": "ad28cbc2ede4b204321d1d23ed4cd3672e613330a06f56e076995cd1424da256",
+      "loanId": "LN-000004",
+      "loanRecordId": "mtg4lg7z9c3060da370c738d"
+    },
+    {
+      "hash": "b2e1d554875646697bef10ffb37b8ccaa39d9d1179b1d39d4f6dca25544e4ba2",
+      "loanId": "LN-000005",
+      "loanRecordId": "mtg4lg83e1880e38a9f6b41d"
+    },
+    {
+      "hash": "ba371a5ca9890c6fd53b7647ed19083037f6c2fb128dc90802d45cb0ada7589e",
+      "loanId": "LN-000006",
+      "loanRecordId": "mtg4lg865cc548f13d1aed0f"
+    },
+    {
+      "hash": "7943492d7d311f0159ea8cd5a26d2d66edc522b163a68149590947495a01f327",
+      "loanId": "LN-000007",
+      "loanRecordId": "mtg4lg8e6416826be8d2ce3d"
+    },
+    {
+      "hash": "e136382dc42707af1a65d94c3dc51f53046946610eac38a5fbb39da02372915f",
+      "loanId": "LN-000008",
+      "loanRecordId": "mtg4lg8hf64d073abffdffad"
+    },
+    {
+      "hash": "0d445102ff79e40cae28f9b6bfa116227cdc8c8b02b065338fea21a2bb1b95e1",
+      "loanId": "LN-000010",
+      "loanRecordId": "mtg4lg8nb5b05d1d8d72048c"
+    },
+    {
+      "hash": "efdd8bf83679935ab20f9c9d9a90d3e277ad3b64582d9320ba90a31caf3cdd44",
+      "loanId": "LN-000011",
+      "loanRecordId": "mtg4lg8r582dbc3bd7b05d8f"
+    },
+    {
+      "hash": "6f965ef4a19d3185bb176c3a94706a2f837852737648440eae2069575c6977f2",
+      "loanId": "LN-000012",
+      "loanRecordId": "mtg4lg8u456ae09e954c7cba"
+    },
+    {
+      "hash": "69dc6108d4a51e7003ae857f9fe75515c0142c004c691923091fd15e0a71d442",
+      "loanId": "LN-000013",
+      "loanRecordId": "mtg4lg8xffbd63c0a3dadc83"
+    },
+    {
+      "hash": "2a43016d1337a1769c14ceab27c9420c7d2e6cfb6a10945e2febc5aa7e19875c",
+      "loanId": "LN-000014",
+      "loanRecordId": "mtg4lg90b53c3879079837da"
+    },
+    {
+      "hash": "443fede320b3d1c33d5990013c893637c6f348652e8200e6fcf865c3cbd6475f",
+      "loanId": "LN-000015",
+      "loanRecordId": "mtg4lg93b731118e2ef8debe"
+    },
+    {
+      "hash": "a4e9c39ba203c5564c5a67200665abd29445308a391a428ea9ecbcc5ee369caf",
+      "loanId": "LN-000017",
+      "loanRecordId": "mtg4lg9c00c46937933a37eb"
+    },
+    {
+      "hash": "abf13ba46e048f942272fae65b5131b97ac39f2009091b7910a1113a6bc20ff9",
+      "loanId": "LN-000018",
+      "loanRecordId": "mtg4lg9g8c60e27cb003ae65"
+    },
+    {
+      "hash": "3aa4bbfac5d30442e01751e918ee21d25aba425c96253a09a49d6d9f629a1c0d",
+      "loanId": "LN-000019",
+      "loanRecordId": "mtg4lg9i99dcfd9e3aa5cefa"
+    },
+    {
+      "hash": "f5d29ce24987701f78a27388e7eb577e65f13fb2b4b4347047eac488de5b6337",
+      "loanId": "LN-000020",
+      "loanRecordId": "mtg4lg9mc732310cf78befda"
+    },
+    {
+      "hash": "b4fae0c252fc11680edc39ebb5165896bef2a429c2b21929decdc879c0f938d6",
+      "loanId": "LN-000021",
+      "loanRecordId": "mtg4lg9r634d8eef5cb509ee"
+    },
+    {
+      "hash": "c5c3a8e82c306ba117e586a8c530b55e3deb4016c0eeb09893e0098847de890b",
+      "loanId": "LN-000022",
+      "loanRecordId": "mtg4lg9w7a2c0585bdfb4801"
+    },
+    {
+      "hash": "cf33643bc6f52b26d848f6816acc48a1bc758e5b6054c88ce3ae79c71cc56e3f",
+      "loanId": "LN-000023",
+      "loanRecordId": "mtg4lga3bdbd977d60913bc7"
+    }
+  ],
+  "recordCount": 448,
+  "signerId": "mtg4lccl2d42db2b46f2651b",
+  "signerEmail": "reviewer@intain.demo",
+  "lastEventSeq": 1106,
+  "createdAt": "2026-08-30T18:11:38.239Z",
+  "_note": "leaves truncated to 20 of 448 for the repository; the full list is in the live export and is what the merkleRoot is computed over"
+}

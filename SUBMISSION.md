@@ -12,7 +12,9 @@ on trust, which is the same principle the product is built on.
 | Run it | [`README.md`](README.md) — five commands to a working instance |
 | Watch it | [`DEMO.md`](DEMO.md) — the five-minute walkthrough, beat by beat |
 | How it was built | [`docs/AI_DEVELOPMENT_LOG.md`](docs/AI_DEVELOPMENT_LOG.md) — agentic coding, including what was rejected |
+| The architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — two pages: design, data model, engine, AI, audit, trade-offs |
 | Why it is shaped this way | [`docs/adr/`](docs/adr/) — seven decisions, each with the alternatives that lost |
+| Sample output | [`samples/`](samples/) — a verified loan dataset and an audit trail, produced by this system |
 | Prove it works | `npm run test && npm run e2e && npm run ui:demo` |
 | Run it with no accounts | `docker compose up --build` → http://localhost:3000 |
 

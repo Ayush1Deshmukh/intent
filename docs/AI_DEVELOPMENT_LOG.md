@@ -102,6 +102,106 @@ good way.
 
 ---
 
+## 2b · Representative prompts
+
+Eight, chosen to span the range rather than to flatter. Reconstructed to substance, as
+the scope note says; the artifacts each produced are named so the claim is checkable.
+
+**1 · Enumerating failure modes** — the class of task where the assistant is genuinely
+better than a tired human, and the one it was used for most.
+
+> Here is the shape of a US loan tape date column. Enumerate every way a date can arrive
+> in a real servicer export and be misread — not every way it can be *invalid*, every way
+> it can be **silently wrong**. Include the Excel cases.
+
+→ produced the 1899-12-30 epoch trap, leading-zero ZIP truncation, and the DD/MM vs MM/DD
+ambiguity that became the demo's centrepiece. `src/lib/coerce/date.ts`, `tests/coerce.test.ts`.
+
+**2 · Generating against a fixed grammar** — mechanical, high-volume, easily checked. The
+grammar itself was designed by hand first; that ordering is the whole point.
+
+> Here is the rule DSL grammar and the 26 canonical fields with their types. Write the
+> rule for "current balance must not exceed original principal", as a JSON expression that
+> is TRUE when the row is BAD. Money comparisons go through decimal.js, not JS `<`.
+
+→ most of `src/lib/rules/catalog.ts`. Reviewing them was not mechanical; see §3.3 and §3.4.
+
+**3 · Being asked to argue against itself** — used before every irreversible design choice.
+
+> I am about to store the record hash on the row and compare against it when verifying.
+> Argue the case that this is worthless, as strongly as you can. If the argument holds,
+> say what to do instead.
+
+→ it made the argument correctly, and `verifyTape()` recomputes from live rows. §3.5,
+[ADR 0003](adr/0003-two-hashes.md).
+
+**4 · Naming the thing that is missing** — the prompt that found the workflow's dead end.
+
+> Walk the exception lifecycle for a BLOCKER whose field has no defensible repair — no
+> loan id at all. Show me every state transition available to a reviewer. If there is no
+> legitimate path to sign-off, say so plainly.
+
+→ there was none, and both scripts that reached sign-off were doing it with an `UPDATE`.
+Produced `excludeLoan()` and [ADR 0007](adr/0007-a-blocker-you-cannot-fix.md).
+
+**5 · Adversarial test generation** — asking for the cases that break an invariant, not
+the cases that confirm it.
+
+> Write the test that fails if null is ever treated as a rule violation. Construct one
+> record with every optional field empty and assert the specific rules that must NOT fire.
+> Name each one; do not assert a count.
+
+→ `tests/rules.test.ts`, the null-safety block: fifteen rules asserted absent. §3.3.
+
+**6 · Prose that has to survive a hostile reader** — UI copy and error messages, where the
+assistant's fluency is an asset and its confidence is a liability.
+
+> Write the sentence the drawer shows when an operator accepts a proposal. It must make
+> clear that nothing has changed yet, that a different person must approve, and it must
+> not sound like marketing. One sentence.
+
+→ the maker-checker note in the exception drawer, which `ui:demo` now asserts is present.
+
+**7 · Explaining unfamiliar territory fast enough to decide** — used to buy an hour, not to
+produce code.
+
+> Explain Merkle proof construction for a sorted leaf set, specifically what happens to an
+> odd node at each level, and why duplicating it rather than promoting it is a known
+> vulnerability.
+
+→ informed `merkleProof()`; odd nodes are promoted, and `tests/hash.test.ts` pins it.
+
+**8 · The prompt that was wrong to trust** — kept here because it is the honest one.
+
+> Cluster these loan-data exceptions by root cause and return the exception ids in each
+> cluster.
+
+→ it did exactly that, fluently, on the 120-row sample it had been given — and reported a
+45-loan problem as a 5-loan problem. §3.2. The fix was not a better prompt.
+
+---
+
+## 2c · How much of this was AI-written
+
+**Roughly 80–85% of the ~11,700 lines of TypeScript, SQL and test code**, and a similar
+share of the prose. That number on its own is not very interesting, so here is the shape
+behind it, which is:
+
+| Area | Lines | Assistant's share | What that means here |
+|---|---|---|---|
+| `src/app` — routes, pages, components | ~3,600 | highest, ~90% | boilerplate and markup; reviewed by looking at it |
+| `src/lib` — coercion, rules, hashing, AI, policy | ~5,100 | ~75% | written by the assistant, *designed* by hand — grammar, invariants and hash contract came first |
+| `tests` | ~920 | ~85% | generated cases, human-chosen assertions; §3.8 is why the reverse is dangerous |
+| `scripts` | ~1,700 | ~85% | fixtures, e2e, rehearsal |
+| `drizzle` | ~280 | generated | migrations, reviewed as SQL before applying |
+
+The honest summary: **the assistant wrote most of the lines and almost none of the
+decisions.** Every item in §3 is a case where it produced plausible code for a decision
+that had not actually been made yet — and the fix, every time, was to make the decision
+rather than to write a better prompt.
+
+---
+
 ## 3 · Rejected outputs — the part that matters
 
 Each of these was produced by the assistant, looked reasonable, and was wrong. They are

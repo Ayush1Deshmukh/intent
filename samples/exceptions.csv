@@ -1,0 +1,210 @@
+ruleCode,ruleName,severity,status,loanRecordId,field,observed,expected,clusterKey
+STR-001,Missing loan identifier,BLOCKER,REJECTED,mtg4lgcq44d5abc9cac673d4,loanId,,a non-empty loan identifier,STR-001
+STR-001,Missing loan identifier,BLOCKER,REJECTED,mtg4lh096908dd08e9294de5,loanId,,a non-empty loan identifier,STR-001
+STR-001,Missing loan identifier,BLOCKER,REJECTED,mtg4lgbk6a90e1307b1d315c,loanId,,a non-empty loan identifier,STR-001
+STR-001,Missing loan identifier,BLOCKER,REJECTED,mtg4lgnf7c4d7851933887a8,loanId,,a non-empty loan identifier,STR-001
+STR-001,Missing loan identifier,BLOCKER,REJECTED,mtg4lgxw0f158c04a2a5b676,loanId,,a non-empty loan identifier,STR-001
+STR-001,Missing loan identifier,BLOCKER,REJECTED,mtg4lhhf7ab00c6fde078b39,loanId,,a non-empty loan identifier,STR-001
+STR-002,Duplicate loan identifier,BLOCKER,REJECTED,mtg4lgc2c02520adb89a4bc4,loanId,LN-000042,the identifier to appear exactly once in the tape,STR-002
+STR-002,Duplicate loan identifier,BLOCKER,REJECTED,mtg4lgkh7a6817efc124a377,loanId,LN-000042,the identifier to appear exactly once in the tape,STR-002
+STR-002,Duplicate loan identifier,BLOCKER,REJECTED,mtg4lh3t27a42d9ade8c310e,loanId,LN-000200,the identifier to appear exactly once in the tape,STR-002
+STR-002,Duplicate loan identifier,BLOCKER,REJECTED,mtg4lhd07601bd5f8eb092bf,loanId,LN-000358,the identifier to appear exactly once in the tape,STR-002
+STR-002,Duplicate loan identifier,BLOCKER,REJECTED,mtg4lgs5d91ed75a39775b13,loanId,LN-000200,the identifier to appear exactly once in the tape,STR-002
+STR-002,Duplicate loan identifier,BLOCKER,REJECTED,mtg4lhnq26c9ddae4a4fe75b,loanId,LN-000358,the identifier to appear exactly once in the tape,STR-002
+STR-003,"Duplicate borrower, principal and origination date",CRITICAL,REJECTED,mtg4lgcq44d5abc9cac673d4,borrowerId,B-00333,"no other row with the same borrower, principal and origination date",STR-003
+STR-003,"Duplicate borrower, principal and origination date",CRITICAL,REJECTED,mtg4lgxw0f158c04a2a5b676,borrowerId,B-00333,"no other row with the same borrower, principal and origination date",STR-003
+STR-004,Source column not mapped,WARNING,WAIVED,,,Pool Cd,every source column either mapped or explicitly ignored,
+FMT-001,Origination date unparseable,CRITICAL,REJECTED,mtg4lg8kb83ce31ce3cb0a97,originationDate,"impossible date ""31/04/2023""",a real calendar date,date-format-mismatch
+FMT-001,Origination date unparseable,CRITICAL,REJECTED,mtg4lgd54dca7a883ec1b970,originationDate,"impossible date ""30/02/2022""",a real calendar date,date-format-mismatch
+FMT-001,Origination date unparseable,CRITICAL,REJECTED,mtg4lgho9139dee08aca38f6,originationDate,"impossible date ""30/02/2022""",a real calendar date,date-format-mismatch
+FMT-001,Origination date unparseable,CRITICAL,REJECTED,mtg4lglo589d3efffdbe6394,originationDate,"impossible date ""31/02/2024""",a real calendar date,date-format-mismatch
+FMT-001,Origination date unparseable,CRITICAL,REJECTED,mtg4lgpk9333b43f00b15ea8,originationDate,"impossible date ""31/09/2021""",a real calendar date,date-format-mismatch
+FMT-001,Origination date unparseable,CRITICAL,REJECTED,mtg4lgtc90c2554cc7e0f96c,originationDate,"impossible date ""30/02/2022""",a real calendar date,date-format-mismatch
+FMT-001,Origination date unparseable,CRITICAL,REJECTED,mtg4lgxo5c17b133331b6f59,originationDate,"impossible date ""31/04/2023""",a real calendar date,date-format-mismatch
+FMT-001,Origination date unparseable,CRITICAL,REJECTED,mtg4lh6t3e75f34ddf8fefe7,originationDate,"impossible date ""31/09/2021""",a real calendar date,date-format-mismatch
+FMT-001,Origination date unparseable,CRITICAL,REJECTED,mtg4lhb50e66dc0593caab7e,originationDate,"impossible date ""31/02/2024""",a real calendar date,date-format-mismatch
+FMT-001,Origination date unparseable,CRITICAL,REJECTED,mtg4lhhla463288bb1f169d5,originationDate,"impossible date ""31/02/2024""",a real calendar date,date-format-mismatch
+FMT-001,Origination date unparseable,CRITICAL,REJECTED,mtg4lhlucc5deb2ba5ddb66f,originationDate,"impossible date ""31/04/2023""",a real calendar date,date-format-mismatch
+FMT-001,Origination date unparseable,CRITICAL,REJECTED,mtg4lhrb667b8890af935ebe,originationDate,"impossible date ""31/04/2023""",a real calendar date,date-format-mismatch
+FMT-002,Maturity date unparseable,CRITICAL,REJECTED,mtg4lg96865cbc299f1e7eeb,maturityDate,"unrecognised date format ""TBD""",a real calendar date,date-format-mismatch
+FMT-002,Maturity date unparseable,CRITICAL,REJECTED,mtg4lgm3f1437b918167372c,maturityDate,"impossible date ""00/00/0000""",a real calendar date,date-format-mismatch
+FMT-002,Maturity date unparseable,CRITICAL,REJECTED,mtg4lgxz4b87f110a70a0f1c,maturityDate,"unrecognised date format ""n/a""",a real calendar date,date-format-mismatch
+FMT-002,Maturity date unparseable,CRITICAL,REJECTED,mtg4lhht269057175e0c53fa,maturityDate,"incomplete date ""04-2049"": month and year only, no day",a real calendar date,date-format-mismatch
+FMT-003,Balance is not numeric,CRITICAL,REJECTED,mtg4lgb6ddb236d55834ccfe,currentBalance,"not a number: ""pending""",a numeric amount,FMT-003
+FMT-003,Balance is not numeric,CRITICAL,REJECTED,mtg4lgqk1736f901278bd49e,currentBalance,"not a number: ""TBD""",a numeric amount,FMT-003
+FMT-003,Balance is not numeric,CRITICAL,REJECTED,mtg4lhaq99fff980728e0525,currentBalance,"not a number: ""pending""",a numeric amount,FMT-003
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lg8nb5b05d1d8d72048c,borrowerState,"unrecognised state ""Ontario""",a two-letter USPS state code,FMT-004
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lgc9851e56dda5ddd87c,borrowerState,"unrecognised state ""XX""",a two-letter USPS state code,FMT-004
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lgg7838a7a27f99a2eac,borrowerState,"unrecognised state ""N/A""",a two-letter USPS state code,FMT-004
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lgjff9c09ab8135815bd,borrowerState,"unrecognised state ""N/A""",a two-letter USPS state code,FMT-004
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lgmm5a718cbc4735f0c6,borrowerState,"unrecognised state ""XX""",a two-letter USPS state code,FMT-004
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lgpr63385e0d21d503a2,borrowerState,"unrecognised state ""N/A""",a two-letter USPS state code,FMT-004
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lgsvfe98ecb30cac61bf,borrowerState,"unrecognised state ""Ontario""",a two-letter USPS state code,FMT-004
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lgvyea7ebb556551ba67,borrowerState,"unrecognised state ""--""",a two-letter USPS state code,FMT-004
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lh30dcac74a70bcf3e77,borrowerState,"unrecognised state ""Unknown""",a two-letter USPS state code,FMT-004
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lh84b0ba1d881c541fdb,borrowerState,"unrecognised state ""Ontario""",a two-letter USPS state code,FMT-004
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lhbg72a135a2106f5ae9,borrowerState,"unrecognised state ""Ontario""",a two-letter USPS state code,FMT-004
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lhgwd0072208a654cd53,borrowerState,"unrecognised state ""N/A""",a two-letter USPS state code,FMT-004
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lhkneb57fe0253b68fce,borrowerState,"unrecognised state ""XX""",a two-letter USPS state code,FMT-004
+FMT-004,Invalid state code,WARNING,WAIVED,mtg4lhny8581c9ee0eb8c9a5,borrowerState,"unrecognised state ""XX""",a two-letter USPS state code,FMT-004
+FMT-005,Malformed postal code,WARNING,REJECTED,mtg4lgqk1736f901278bd49e,borrowerZip,"malformed ZIP ""-----""",##### or #####-####,FMT-005
+RNG-001,Credit score outside 300-850,CRITICAL,REJECTED,mtg4lgau092f82c38fa37b66,creditScore,8500,300 to 850,RNG-001
+RNG-001,Credit score outside 300-850,CRITICAL,REJECTED,mtg4lgiqaf9e835aefc9b0b5,creditScore,250,300 to 850,RNG-001
+RNG-001,Credit score outside 300-850,CRITICAL,REJECTED,mtg4lgpg241c4762582cbdd0,creditScore,1200,300 to 850,RNG-001
+RNG-001,Credit score outside 300-850,CRITICAL,REJECTED,mtg4lgw4d6d4ab2f95e40020,creditScore,1200,300 to 850,RNG-001
+RNG-001,Credit score outside 300-850,CRITICAL,REJECTED,mtg4lh8v1545282cac1baf2e,creditScore,45,300 to 850,RNG-001
+RNG-001,Credit score outside 300-850,CRITICAL,REJECTED,mtg4lhiba123986d29299bad,creditScore,900,300 to 850,RNG-001
+RNG-002,Interest rate outside plausible range,CRITICAL,RESOLVED,mtg4lg9g8c60e27cb003ae65,interestRate,678.4000,0% to 25%,RNG-002
+RNG-002,Interest rate outside plausible range,CRITICAL,RESOLVED,mtg4lgp8e2cc62536c4984e2,interestRate,512.5000,0% to 25%,RNG-002
+RNG-002,Interest rate outside plausible range,CRITICAL,RESOLVED,mtg4lh9l61e40c1a02d25014,interestRate,621.4000,0% to 25%,RNG-002
+RNG-003,Term outside 1-480 months,CRITICAL,RESOLVED,mtg4lg9w7a2c0585bdfb4801,termMonths,600,1 to 480 months,RNG-003
+RNG-003,Term outside 1-480 months,CRITICAL,RESOLVED,mtg4lgq634fa3108898300fa,termMonths,600,1 to 480 months,RNG-003
+RNG-003,Term outside 1-480 months,CRITICAL,RESOLVED,mtg4lhb227eec91605f25bd5,termMonths,600,1 to 480 months,RNG-003
+RNG-004,Negative principal or balance,BLOCKER,RESOLVED,mtg4lg8u456ae09e954c7cba,currentBalance,-98014.76,zero or greater,RNG-004
+RNG-004,Negative principal or balance,BLOCKER,RESOLVED,mtg4lgnb3311075ffb0c0c33,currentBalance,-68036.83,zero or greater,RNG-004
+RNG-004,Negative principal or balance,BLOCKER,RESOLVED,mtg4lh55cc508b6a6a8bf5de,currentBalance,-334490.62,zero or greater,RNG-004
+RNG-005,Days past due implausible,WARNING,WAIVED,mtg4lgaob544eae28fbde08f,daysPastDue,-10,0 to 3650,RNG-005
+RNG-005,Days past due implausible,WARNING,WAIVED,mtg4lgs7c5fe78c196e16d76,daysPastDue,-10,0 to 3650,RNG-005
+XFD-001,Current balance exceeds original principal,CRITICAL,RESOLVED,mtg4lg90b53c3879079837da,currentBalance,183351.78,at or below the original principal,XFD-001
+XFD-001,Current balance exceeds original principal,CRITICAL,RESOLVED,mtg4lgd88465c3c15a07d387,currentBalance,716673.61,at or below the original principal,XFD-001
+XFD-001,Current balance exceeds original principal,CRITICAL,RESOLVED,mtg4lghb9beb670c2644db86,currentBalance,180836.47,at or below the original principal,XFD-001
+XFD-001,Current balance exceeds original principal,CRITICAL,RESOLVED,mtg4lgksd40758ea1392a436,currentBalance,272104.93,at or below the original principal,XFD-001
+XFD-001,Current balance exceeds original principal,CRITICAL,RESOLVED,mtg4lgogc6e3feca06739396,currentBalance,776643.34,at or below the original principal,XFD-001
+XFD-001,Current balance exceeds original principal,CRITICAL,RESOLVED,mtg4lgs28ba13d608ec71f46,currentBalance,175332.62,at or below the original principal,XFD-001
+XFD-001,Current balance exceeds original principal,CRITICAL,RESOLVED,mtg4lgvg1f76304ad2ec8171,currentBalance,488216.72,at or below the original principal,XFD-001
+XFD-001,Current balance exceeds original principal,CRITICAL,RESOLVED,mtg4lh2n9ea3a8d6fc9ed8a2,currentBalance,735362.16,at or below the original principal,XFD-001
+XFD-001,Current balance exceeds original principal,CRITICAL,RESOLVED,mtg4lh8jed0c26a940e15b01,currentBalance,532963.25,at or below the original principal,XFD-001
+XFD-001,Current balance exceeds original principal,CRITICAL,RESOLVED,mtg4lhc18c1338832e44a9f7,currentBalance,932223.86,at or below the original principal,XFD-001
+XFD-001,Current balance exceeds original principal,CRITICAL,RESOLVED,mtg4lhi9d5f9c54784019229,currentBalance,521793.80,at or below the original principal,XFD-001
+XFD-001,Current balance exceeds original principal,CRITICAL,RESOLVED,mtg4lhm09df1f62a3a0f68ed,currentBalance,576659.28,at or below the original principal,XFD-001
+XFD-002,Maturity on or before origination,BLOCKER,REJECTED,mtg4lgae8adbb42230e0579b,maturityDate,2017-11-11,a maturity date after the origination date,date-format-mismatch
+XFD-002,Maturity on or before origination,BLOCKER,REJECTED,mtg4lgk79bcbba483995602c,maturityDate,2023-12-11,a maturity date after the origination date,date-format-mismatch
+XFD-002,Maturity on or before origination,BLOCKER,REJECTED,mtg4lgt7268d03948cd02b4b,maturityDate,2024-11-14,a maturity date after the origination date,date-format-mismatch
+XFD-002,Maturity on or before origination,BLOCKER,REJECTED,mtg4lh7y2c07aceaf85db244,maturityDate,2022-12-17,a maturity date after the origination date,date-format-mismatch
+XFD-002,Maturity on or before origination,BLOCKER,REJECTED,mtg4lhjr78ca71b998cf4d1c,maturityDate,2019-12-28,a maturity date after the origination date,date-format-mismatch
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lg9mc732310cf78befda,paymentAmount,3211.47 (amortizing payment is 3024.86),3024.86 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lgd02cc32c60dc99bcce,paymentAmount,2291.69 (amortizing payment is 5860.49),5860.49 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lgfwe3fff9778b2bdb29,paymentAmount,5954.55 (amortizing payment is 5647.31),5647.31 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lgid958f8c31e3f6179a,paymentAmount,8938.50 (amortizing payment is 8230.23),8230.23 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lgkpd64ab8496b724138,paymentAmount,16218.61 (amortizing payment is 15063.91),15063.91 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lgndcd95703084e9d318,paymentAmount,1675.89 (amortizing payment is 1589.67),1589.67 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lgpvc03309d99b853154,paymentAmount,1060.63 (amortizing payment is 956.40),956.40 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lgsa6bb5ad579fdb2c39,paymentAmount,6934.58 (amortizing payment is 6514.31),6514.31 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lgupa01205f4ea46ea46,paymentAmount,3040.04 (amortizing payment is 2805.94),2805.94 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lgwn7de5b0c605026a44,paymentAmount,6728.10 (amortizing payment is 12243.19),12243.19 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lgxka14fcfedfedc0ed6,paymentAmount,4221.78 (amortizing payment is 3873.87),3873.87 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lh3yc3f9bdd408dc1e82,paymentAmount,420.74 (amortizing payment is 397.34),397.34 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lh813f452f16f579adeb,paymentAmount,285.92 (amortizing payment is 261.90),261.90 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,REJECTED,mtg4lhaq99fff980728e0525,paymentAmount,1032.60 (amortizing payment is 945.08),945.08 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lhi9d5f9c54784019229,paymentAmount,3132.48 (amortizing payment is 2885.80),2885.80 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,REJECTED,mtg4lgcq44d5abc9cac673d4,paymentAmount,4054.13 (amortizing payment is 3842.67),3842.67 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,REJECTED,mtg4lgxw0f158c04a2a5b676,paymentAmount,2520.86 (amortizing payment is 3358.64),3358.64 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,REJECTED,mtg4lhd07601bd5f8eb092bf,paymentAmount,2938.32 (amortizing payment is 2704.19),2704.19 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lhkye889ce45c8a6db09,paymentAmount,4432.89 (amortizing payment is 4149.60),4149.60 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lhnmfba8512417a2bb96,paymentAmount,1998.66 (amortizing payment is 1829.78),1829.78 ±2%,XFD-003
+XFD-003,Payment does not amortize,CRITICAL,RESOLVED,mtg4lhrk05abacc37876e574,paymentAmount,4241.86 (amortizing payment is 3919.95),3919.95 ±2%,XFD-003
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lg8hf64d073abffdffad,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lgaj4bad1eca36416d68,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lgf6f348c6fdc14fc70f,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lggx42f2b7133183f885,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lgiw057b302009d04d88,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lgkkfd33d8007019fbbb,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lgmjf474992a46aac16c,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lgoaa4b24c8e7b610448,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lgq634fa3108898300fa,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lgs0abb30199f511d09e,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lgtp82f25496f8a48c93,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,REJECTED,mtg4lgxo5c17b133331b6f59,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lh30dcac74a70bcf3e77,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lh6h090b0b3864976baa,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lh8p4fa0b23dea7d8f55,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lham26c09cee83a39aee,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lhcc813a9f0ce12481cd,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,RESOLVED,mtg4lhg951f8523c10767a2c,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-004,Delinquency conflicts with payment status,CRITICAL,REJECTED,mtg4lgcq44d5abc9cac673d4,paymentStatus,CURRENT,a delinquent status when days past due is above zero,XFD-004
+XFD-005,Paid off but balance remains,CRITICAL,RESOLVED,mtg4lga84b543fbf72fd72c9,currentBalance,132100.51,a zero balance on a paid-off loan,XFD-005
+XFD-005,Paid off but balance remains,CRITICAL,RESOLVED,mtg4lgga4707dace923c0e32,currentBalance,205486.63,a zero balance on a paid-off loan,XFD-005
+XFD-005,Paid off but balance remains,CRITICAL,RESOLVED,mtg4lgli8ed4cb1f26b83f1b,currentBalance,111993.51,a zero balance on a paid-off loan,XFD-005
+XFD-005,Paid off but balance remains,CRITICAL,RESOLVED,mtg4lgvg1f76304ad2ec8171,currentBalance,488216.72,a zero balance on a paid-off loan,XFD-005
+XFD-005,Paid off but balance remains,CRITICAL,RESOLVED,mtg4lh5l73721bca9c9e448c,currentBalance,429935.58,a zero balance on a paid-off loan,XFD-005
+XFD-005,Paid off but balance remains,CRITICAL,RESOLVED,mtg4lhbn734e63d177208379,currentBalance,96386.35,a zero balance on a paid-off loan,XFD-005
+XFD-005,Paid off but balance remains,CRITICAL,RESOLVED,mtg4lhja1b2cd93e6c34897c,currentBalance,451987.12,a zero balance on a paid-off loan,XFD-005
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lg7z9c3060da370c738d,termMonths,240,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lg8r582dbc3bd7b05d8f,termMonths,84,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lg9w7a2c0585bdfb4801,termMonths,600,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lgazdae62438f9611961,termMonths,60,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lgg13f8932d9bf6fda46,termMonths,84,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lghb9beb670c2644db86,termMonths,84,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lgis640060ccf6a69207,termMonths,60,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lgkmd55ef884531742c3,termMonths,360,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lglr21622aa047faa935,termMonths,84,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lgmr3e09a99cb06b325d,termMonths,120,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lgq634fa3108898300fa,termMonths,600,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lgqt546c1857d87dbbb0,termMonths,360,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lgrj93c79dd3e2bead5d,termMonths,120,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lgsq877372718edec79c,termMonths,84,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lgv8778e4ecab62b9893,termMonths,360,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lgxsa1ef37328a0de56a,termMonths,84,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lha32da202acc12f38ed,termMonths,240,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lhaz43bd6cb6633b3d40,termMonths,60,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,WAIVED,mtg4lhb227eec91605f25bd5,termMonths,600,within 2 months of the gap between origination and maturity,date-format-mismatch
+XFD-006,Term inconsistent with the dates,WARNING,REJECTED,mtg4lgnf7c4d7851933887a8,termMonths,60,within 2 months of the gap between origination and maturity,date-format-mismatch
+CON-001,Sources disagree on this field,CRITICAL,REJECTED,mtg4lgc2c02520adb89a4bc4,currentBalance,currentBalance: tape 374118.31 vs servicer_update.csv 60134.23,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lg7kd09517140d53a0d2,currentBalance,currentBalance: tape 282742.26 vs servicer_update.csv 278293.02,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lgbf8ea92845fbf8c266,currentBalance,currentBalance: tape 495461.77 vs servicer_update.csv 482872.76,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lgf6f348c6fdc14fc70f,paymentStatus,paymentStatus: tape CURRENT vs servicer_update.csv DELINQUENT,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lgfz06d306296bf7936b,currentBalance,currentBalance: tape 146105.72 vs servicer_update.csv 137395.10,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lgjff9c09ab8135815bd,currentBalance,currentBalance: tape 238111.39 vs servicer_update.csv 234190.17,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lgmjf474992a46aac16c,paymentStatus,paymentStatus: tape CURRENT vs servicer_update.csv DELINQUENT,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lgmu30a9d6d45f797f53,currentBalance,currentBalance: tape 281854.14 vs servicer_update.csv 269475.32,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lgnb3311075ffb0c0c33,currentBalance,currentBalance: tape -68036.83 vs servicer_update.csv 68036.83,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lgny5d9820fa7c235601,paymentStatus,paymentStatus: tape DEFAULT vs servicer_update.csv DELINQUENT,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lgqe6ed6d2a41d9ef5a6,currentBalance,currentBalance: tape 295498.39 vs servicer_update.csv 289579.39,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lgus6bed3afc65a7499f,paymentStatus,paymentStatus: tape DEFAULT vs servicer_update.csv DELINQUENT,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lgxh8c03f173c061d30b,currentBalance,currentBalance: tape 132178.82 vs servicer_update.csv 128785.18,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lh4u143d548cf621f5c2,paymentStatus,paymentStatus: tape DEFAULT vs servicer_update.csv DELINQUENT,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lh5l73721bca9c9e448c,currentBalance,currentBalance: tape 429935.58 vs servicer_update.csv 411284.64,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lh6h090b0b3864976baa,paymentStatus,paymentStatus: tape CURRENT vs servicer_update.csv DELINQUENT,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lha04b6de7fa6ac12129,currentBalance,currentBalance: tape 659012.35 vs servicer_update.csv 641446.85,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lhdb57e62129f81789e2,currentBalance,currentBalance: tape 340453.66 vs servicer_update.csv 320862.29,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lhg951f8523c10767a2c,paymentStatus,paymentStatus: tape CURRENT vs servicer_update.csv DELINQUENT,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lhjoa954787c996916ba,currentBalance,currentBalance: tape 42782.16 vs servicer_update.csv 41545.37,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lhndb0992763623d69f4,currentBalance,currentBalance: tape 384716.26 vs servicer_update.csv 373810.66,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lhtna27c53b4432f5c3a,currentBalance,currentBalance: tape 587758.09 vs servicer_update.csv 560514.21,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lhuw350765707cba5f92,paymentStatus,paymentStatus: tape DEFAULT vs servicer_update.csv DELINQUENT,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,REJECTED,mtg4lhd07601bd5f8eb092bf,currentBalance,currentBalance: tape 148566.27 vs servicer_update.csv 509058.90,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,REJECTED,mtg4lhnq26c9ddae4a4fe75b,paymentStatus,paymentStatus: tape DEFAULT vs servicer_update.csv DELINQUENT,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,REJECTED,mtg4lgpk9333b43f00b15ea8,paymentStatus,paymentStatus: tape DEFAULT vs servicer_update.csv DELINQUENT,the loan tape and the servicer update to agree,source-conflict
+CON-001,Sources disagree on this field,CRITICAL,RESOLVED,mtg4lgtp82f25496f8a48c93,currentBalance,currentBalance: tape 221244.36 vs servicer_update.csv 212291.36,the loan tape and the servicer update to agree,source-conflict
+CON-002,Unknown servicer,WARNING,WAIVED,mtg4lgu2c5576308a500f3fa,servicerId,SVC-99,a servicer present in the reference list,CON-002
+CON-002,Unknown servicer,WARNING,WAIVED,mtg4lhjw1ecfeaf41f4fc63f,servicerId,SVCX,a servicer present in the reference list,CON-002
+CON-003,Loan documentation missing,CRITICAL,REJECTED,mtg4lg7kd09517140d53a0d2,documentStatus,MISSING,documentation present in the manifest,CON-003
+CON-003,Loan documentation missing,CRITICAL,REJECTED,mtg4lgd02cc32c60dc99bcce,documentStatus,MISSING,documentation present in the manifest,CON-003
+CON-003,Loan documentation missing,CRITICAL,REJECTED,mtg4lgi285c7091e7938a588,documentStatus,MISSING,documentation present in the manifest,CON-003
+CON-003,Loan documentation missing,CRITICAL,REJECTED,mtg4lgmm5a718cbc4735f0c6,documentStatus,MISSING,documentation present in the manifest,CON-003
+CON-003,Loan documentation missing,CRITICAL,REJECTED,mtg4lgr36a794eab23dca746,documentStatus,MISSING,documentation present in the manifest,CON-003
+CON-003,Loan documentation missing,CRITICAL,REJECTED,mtg4lgvg1f76304ad2ec8171,documentStatus,MISSING,documentation present in the manifest,CON-003
+CON-003,Loan documentation missing,CRITICAL,REJECTED,mtg4lh4cb027f7eabd38f3d7,documentStatus,MISSING,documentation present in the manifest,CON-003
+CON-003,Loan documentation missing,CRITICAL,REJECTED,mtg4lhaj386265113cc26660,documentStatus,MISSING,documentation present in the manifest,CON-003
+CON-003,Loan documentation missing,CRITICAL,REJECTED,mtg4lhmje6631bf59868b811,documentStatus,MISSING,documentation present in the manifest,CON-003
+CON-003,Loan documentation missing,CRITICAL,REJECTED,mtg4lhuh1e0ee7e427b48e58,documentStatus,MISSING,documentation present in the manifest,CON-003
+STL-001,Record not updated within the reporting period,WARNING,WAIVED,mtg4lg8e6416826be8d2ce3d,lastUpdatedAt,2026-01-01T00:00:00.000Z,updated within 95 days of the reporting date,STL-001
+STL-001,Record not updated within the reporting period,WARNING,WAIVED,mtg4lggz1575567b2f7bd32f,lastUpdatedAt,2025-08-08T00:00:00.000Z,updated within 95 days of the reporting date,STL-001
+STL-001,Record not updated within the reporting period,WARNING,WAIVED,mtg4lgkpd64ab8496b724138,lastUpdatedAt,2025-10-05T00:00:00.000Z,updated within 95 days of the reporting date,STL-001
+STL-001,Record not updated within the reporting period,WARNING,WAIVED,mtg4lgojfe18dbf87d73d90e,lastUpdatedAt,2025-11-13T00:00:00.000Z,updated within 95 days of the reporting date,STL-001
+STL-001,Record not updated within the reporting period,WARNING,WAIVED,mtg4lgsa6bb5ad579fdb2c39,lastUpdatedAt,2026-02-16T00:00:00.000Z,updated within 95 days of the reporting date,STL-001
+STL-001,Record not updated within the reporting period,WARNING,WAIVED,mtg4lgvyea7ebb556551ba67,lastUpdatedAt,2025-08-18T00:00:00.000Z,updated within 95 days of the reporting date,STL-001
+STL-001,Record not updated within the reporting period,WARNING,WAIVED,mtg4lh3yc3f9bdd408dc1e82,lastUpdatedAt,2026-02-17T00:00:00.000Z,updated within 95 days of the reporting date,STL-001
+STL-001,Record not updated within the reporting period,WARNING,WAIVED,mtg4lh9hcacc9038e7a38091,lastUpdatedAt,2025-12-02T00:00:00.000Z,updated within 95 days of the reporting date,STL-001
+STL-001,Record not updated within the reporting period,WARNING,WAIVED,mtg4lhjoa954787c996916ba,lastUpdatedAt,2025-12-11T00:00:00.000Z,updated within 95 days of the reporting date,STL-001
+STL-001,Record not updated within the reporting period,WARNING,REJECTED,mtg4lgcq44d5abc9cac673d4,lastUpdatedAt,2026-03-02T00:00:00.000Z,updated within 95 days of the reporting date,STL-001
+STL-001,Record not updated within the reporting period,WARNING,WAIVED,mtg4lhnmfba8512417a2bb96,lastUpdatedAt,2025-08-20T00:00:00.000Z,updated within 95 days of the reporting date,STL-001
+STL-001,Record not updated within the reporting period,WARNING,REJECTED,mtg4lhd07601bd5f8eb092bf,lastUpdatedAt,2025-12-21T00:00:00.000Z,updated within 95 days of the reporting date,STL-001
+STA-001,Interest rate is an outlier,WARNING,WAIVED,mtg4lg9g8c60e27cb003ae65,interestRate,678.4000,within 3.5 standard deviations of the portfolio mean,STA-001
+STA-001,Interest rate is an outlier,WARNING,WAIVED,mtg4lgp8e2cc62536c4984e2,interestRate,512.5000,within 3.5 standard deviations of the portfolio mean,STA-001
+STA-001,Interest rate is an outlier,WARNING,WAIVED,mtg4lh9l61e40c1a02d25014,interestRate,621.4000,within 3.5 standard deviations of the portfolio mean,STA-001
+STA-002,Placeholder origination date,WARNING,WAIVED,mtg4lgazdae62438f9611961,originationDate,1900-01-01,a real origination date,date-format-mismatch
+STA-002,Placeholder origination date,WARNING,WAIVED,mtg4lglr21622aa047faa935,originationDate,1900-01-01,a real origination date,date-format-mismatch
+STA-002,Placeholder origination date,WARNING,WAIVED,mtg4lgv8778e4ecab62b9893,originationDate,1900-01-01,a real origination date,date-format-mismatch
+STA-002,Placeholder origination date,WARNING,WAIVED,mtg4lhaz43bd6cb6633b3d40,originationDate,1900-01-01,a real origination date,date-format-mismatch
+CMP-001,Credit score empty across too much of the tape,WARNING,WAIVED,,creditScore,21.6% empty,populated in at least 80% of rows,

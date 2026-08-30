@@ -1,0 +1,61 @@
+[
+  {
+    "kind": "LOAN_TAPE",
+    "filename": "loan_tape.csv",
+    "sha256": "cbeff0fae3ea19b7f6473d5188cdab515481b844b3d24059a7174d2e44f962b7",
+    "rowCount": 500,
+    "headers": [
+      "Loan No",
+      "Borrower ID",
+      "Product",
+      "Purpose",
+      "Orig Dt",
+      "Mat Dt",
+      "Orig Bal ($)",
+      "Curr Bal ",
+      "Int Rate",
+      "Term",
+      "P&I",
+      "Status",
+      "DPD",
+      "Last Paid",
+      "Prop St",
+      "Zip",
+      "FICO",
+      "Grade",
+      "Emp Length",
+      "Income Band",
+      "Col_17",
+      "Svcr",
+      "Servicer Name",
+      "As Of",
+      "Source System",
+      "Pool Cd",
+      "Notes"
+    ]
+  },
+  {
+    "kind": "SERVICER_UPDATE",
+    "filename": "servicer_update.csv",
+    "sha256": "4783839adeb50d75cafe6fbf74c763a79a7aaf2a4c071974a5b78617b43dd844",
+    "rowCount": 124,
+    "headers": [
+      "Loan No",
+      "UPB",
+      "Days Delinquent",
+      "Loan Status",
+      "Report Date"
+    ]
+  },
+  {
+    "kind": "DOCUMENT_MANIFEST",
+    "filename": "document_manifest.csv",
+    "sha256": "d24696ab6c9767313023eb7c4f1550a636175abb1ff5377af43bfbbf24c2f3de",
+    "rowCount": 492,
+    "headers": [
+      "Loan No",
+      "Promissory Note",
+      "Security Instrument"
+    ]
+  }
+]

@@ -77,9 +77,13 @@ npm run tamper -- --event 5               # or edit an audit event and break the
 npm run tamper -- --restore               # put both back; the demo is re-runnable
 ```
 
-Start here to read it: **[`DEMO.md`](DEMO.md)** is the five-minute walkthrough,
+Start here to read it: **[`SUBMISSION.md`](SUBMISSION.md)** maps every judged criterion to
+something runnable, **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)** is the two-page
+design note, **[`DEMO.md`](DEMO.md)** is the five-minute walkthrough, and
 **[`docs/AI_DEVELOPMENT_LOG.md`](docs/AI_DEVELOPMENT_LOG.md)** is how it was built with
-agentic tooling and what had to be thrown away.
+agentic tooling and what had to be thrown away. **[`samples/`](samples/)** holds a verified
+loan dataset and an audit trail this system produced, if you want to read output without
+running anything.
 
 ## Architecture in one page
 
