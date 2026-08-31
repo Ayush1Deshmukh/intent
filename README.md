@@ -10,6 +10,10 @@ correction through a maker-checker workflow, and seals the signed-off tape into 
 hash-chained, Merkle-rooted ledger that a downstream consumer can verify **without
 trusting this database**.
 
+> **Runs entirely on free tiers.** Docker locally with no accounts at all, or Vercel +
+> Neon + a free model key if you want a URL. There is no paid dependency anywhere in
+> this project — see [`DEPLOYMENT.md`](DEPLOYMENT.md).
+
 ## Quickstart
 
 Everything, in one command — database included, no accounts, nothing to configure:

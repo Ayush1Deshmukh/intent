@@ -1,7 +1,19 @@
+# dependencies and build output
 node_modules
 .next
-.env
-*.log
+out
 coverage
 tsconfig.tsbuildinfo
+
+# secrets — never commit any of these
+.env
+.env.local
+.env.*.local
+*.pem
+
+# local artifacts: screenshots, recordings, scratch output
 artifacts/
+
+# os / editor
+.DS_Store
+*.log
