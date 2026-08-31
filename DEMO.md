@@ -1,6 +1,6 @@
 # The demo
 
-Five minutes, ten beats, three people. Every beat below is asserted by
+Five minutes, eleven beats, three people. Every beat below is asserted by
 `npm run ui:demo`, which drives this exact sequence through a real browser and fails if
 any of it stops working — so the script and the rehearsal cannot drift apart.
 
@@ -80,7 +80,7 @@ You arrive on the **mapping screen**. Point at two things:
 > verbatim, and they stay that way forever — but a human confirms the mapping before
 > anything is interpreted.
 
-**Click Confirm.** It takes about twenty seconds; talk through the next paragraph while
+**Click "Confirm mapping and validate".** It takes about twenty seconds; talk through the next paragraph while
 it runs.
 
 ## 2 · 216 exceptions, and a number you can act on · 30s
@@ -113,19 +113,23 @@ This is the beat that separates the product from a validation script. Say why it
 > into it. One decision here resolves forty-five exceptions. Finding that is worth more
 > than explaining any one of them.
 
-Click **Show these** to filter the queue to that cluster, then clear it.
+Click **Show these** to filter the queue to that cluster, then **Clear filter**.
 
 ## 4 · One exception, end to end · 60s
 
-Filter the rule dropdown to **XFD-003 — payment does not amortize**. Open a row.
+Set the rule dropdown (it reads *all*) to **XFD-003** — the dropdown lists rule codes,
+not names — and click **Open** on a row.
 
 The drawer shows the raw value as it arrived, the normalized value, the rule, and what
 the rule expected.
 
-**Click Explain.** Three parts come back: what the rule checks, the likely cause for
-*this* row, and what goes wrong downstream if it is left. Point at the chip:
+**Click Explain.** Three parts come back — *What the rule checks*, *Likely cause*,
+*If left unfixed*: what the rule checks, the likely cause for
+*this* row, and what goes wrong downstream if it is left. Point at the **Produced by** line:
 
-> That chip says whether a model wrote this or a rule did. You can always tell.
+> That line says whether a model wrote this or a rule did. You can always tell — and the
+> prompt hash and latency beside it are logged into the same audit trail as every human
+> decision.
 
 **Click "Propose a fix".** This one takes a few seconds with a cold cache — about nine
 on a free tier, measured — and the panel says what it is doing while you wait. Use them:
@@ -144,12 +148,17 @@ for a Reviewer.
 
 ## 5 · Maker is not checker · 20s
 
-Still in the operator window, click **Review queue** in the nav.
+Still in the operator window. First point at the nav: there is no **Review queue** link
+in it. That link is rendered only for a role that holds `proposal:approve`, and this one
+does not.
 
-You get `/denied`, naming the action, the role you hold, and the role required.
+So reach it by hand — type `/review` into the address bar. You get `/denied`, naming the
+action, the role you hold, and the role required.
 
-> The person who accepted a change cannot approve it. That is not a UI convention — the
-> API returns 403 for this role too. There is no hidden button.
+> There isn't even a link to click — the nav doesn't render one for this role. And going
+> there by hand, the server refuses. The person who accepted a change cannot approve it.
+> That is not a UI convention — the API returns 403 for this role too. There is no hidden
+> button.
 
 ## 6 · The reviewer approves · 40s
 
@@ -165,6 +174,22 @@ rationale, the evidence, the confidence, and **who accepted it**.
 > — and the write can never exist without the event.
 
 Note the record version has gone to v2 and its hash has changed.
+
+## 6b · The chain, made visible · 30s
+
+**Reviewer → the tape overview → Audit chain.**
+
+Two hash columns, **Links back to** and **This event**, each with a small colour swatch.
+Scroll slowly.
+
+> Every event carries the hash of the event before it. The colour beside each hash is
+> derived from the hash itself — so an event's "links back to" swatch is necessarily the
+> same colour as the swatch on the row above. Follow the colours down the page and you
+> are reading the chain.
+
+Truncated hex in two columns proves nothing to someone watching a video. The colours make
+the structure legible in one glance, and two different hashes cannot collide into the same
+swatch often enough to fake it.
 
 ## 7 · Sign-off is refused, and the one honest way out · 45s
 
@@ -188,7 +213,8 @@ Point at the red panel:
 > and the count and my reason go into the attestation — which is what actually happens in
 > loan review. Bad loans get kicked.
 
-Type a reason (the button stays disabled until you do) and **Exclude this loan**.
+Under **Drop this loan from the tape**, type a reason into **Reason / note** — the button
+stays disabled until you do — and click **Exclude this loan (needs a reason)**.
 
 > That wrote a `LOAN_EXCLUDED` event into the same hash chain as everything else. Nothing
 > in this system, including dropping a loan, happens off the record.
@@ -202,7 +228,8 @@ For the demo, switch to the pre-reviewed tape here (see *Two tapes*, below). The
 payload, its lineage back to the source file and row, the reviewer who signed it, and its
 hash. One Merkle root over all of them, signed.
 
-**Click "Check integrity".**
+**Click "Check integrity"** in the Integrity panel. (It relabels itself to *Check again*
+once it has run, which is what you press in beat 10.)
 
 > Chain intact over 1108 events, and all 442 sealed records still match the attested root.
 > That root is recomputed from the live rows right now — it never reads the stored hash,
@@ -212,16 +239,26 @@ hash. One Merkle root over all of them, signed.
 
 **Private window → `consumer@intain.demo` → Verified records.**
 
-Read-only. Click into a loan and show the full lineage: the raw string as it arrived, the
-file and row it came from, every transformation applied, every exception raised, the
-proposal, who accepted it, who approved it, and the sealed payload.
+Read-only. The summary shows **Data quality**, **Sealed loans**, **Rows with findings**
+and **Open and gating**, with **Verification history** below — every sign-off and the root
+it signed.
+
+Full per-value lineage lives on the tape's **Records** page, not here: any row there is
+clickable and opens a **Lineage** drawer with the raw string as it arrived, the file and
+row it came from, every transformation applied, every exception raised, who accepted, who
+approved, and the sealed payload. Show it there, either now or during beat 8.
 
 Try to reach `/tapes/new` → denied.
 
 > There is no write action for this role anywhere in the policy table. It is read-only by
 > absence, not by a hidden button.
 
-Export the verified tape. It is a zip, and the thing to open is `VERIFY.md`:
+Each row in the ledger carries a **proof** link — click it and the public proof endpoint
+opens in a new tab, no credential involved.
+
+There is no Export button in the UI; the export is an API route. Open
+`/api/v1/tapes/{id}/export` in the address bar and it downloads the zip. The thing to open
+inside it is `VERIFY.md`:
 
 > That file tells you how to check this tape without this system — the exact hash formula
 > for the event chain, the leaf ordering for the Merkle root, and this export's own result.

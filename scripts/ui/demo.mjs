@@ -105,7 +105,13 @@ step("2  operator: group 216 exceptions by root cause");
 await op.goto(`${BASE}/tapes/${tapeId}/exceptions`, { waitUntil: "networkidle" });
 await op.waitForTimeout(2000);
 await op.locator('button:has-text("Group by root cause")').click();
-await op.waitForTimeout(1200);
+// Clustering is a network call to the model, so waiting a fixed 1200ms was a race:
+// on a cold cache or a rate-limited free tier it had not returned yet and every
+// assertion below failed against an empty panel. Wait for the busy label to clear.
+await op.locator('text=/Finding root causes/i').first()
+  .waitFor({ state: "detached", timeout: 90000 })
+  .catch(() => note("clustering did not settle within 90s"));
+await op.waitForTimeout(600);
 await shot(op, "03-clusters");
 // Assert against the cluster cards, not the whole page: "date" and "conflict" appear
 // in column names and rule text everywhere, so a body-text match passed even when no
@@ -207,6 +213,12 @@ await shot(op, "07-accepted");
 
 /* ================================================ 4  MAKER != CHECKER */
 step("4  the operator cannot approve their own change");
+// The demo says "there isn't even a link to click", so check that, not just the 403.
+// The nav renders Review queue only for a role holding proposal:approve.
+const opNavLinks = await op.locator("header nav a").allInnerTexts();
+opNavLinks.some((t) => /review queue/i.test(t))
+  ? bad("the operator's nav offers Review queue: " + opNavLinks.join(", "))
+  : ok("the operator's nav does not render a Review queue link at all");
 await op.goto(BASE + "/review", { waitUntil: "networkidle" });
 const opAtReview = new URL(op.url()).pathname;
 opAtReview === "/denied"
@@ -233,6 +245,35 @@ applied !== before
   : bad("approval did not change the record");
 const ver = loanId ? await sql(`select version from loan_records where loan_id='${loanId}' and tape_id='${tapeId}'`) : "";
 Number(ver) >= 2 ? ok(`the record version was bumped to v${ver}`) : bad("version not bumped");
+
+/* ============================================== 5b  THE CHAIN IS VISIBLE */
+step("5b reviewer: the audit chain links every event to the one before it");
+await rev.goto(`${BASE}/tapes/${tapeId}/audit`, { waitUntil: "networkidle" });
+await rev.waitForTimeout(1200);
+await shot(rev, "10b-audit-chain");
+
+// Each row shows the previous event's hash and its own. Read them straight out of the
+// DOM and check they actually chain — a page that renders two hash columns proves
+// nothing if the second row's "links back to" is not the first row's "this event".
+const chainRows = await rev.locator("table.dtable tbody tr").evaluateAll((trs) =>
+  trs.map((tr) => [...tr.querySelectorAll("td")]
+    .map((td) => td.getAttribute("title"))
+    .filter((t) => t && /^[0-9a-f]{64}$/.test(t))));
+const linked = chainRows.filter((r) => r.length >= 2);
+linked.length > 3
+  ? ok(`${linked.length} audit rows render both the previous hash and their own`)
+  : bad("the audit page did not render linked hash pairs");
+
+// The page orders by seq ascending, so each row's own hash is the next row's `prev`.
+const breaks = linked.slice(0, -1).filter((r, i) => r[1] !== linked[i + 1][0]);
+breaks.length === 0
+  ? ok("every rendered row links back to the row above it — the chain is visibly intact")
+  : bad(`${breaks.length} rendered rows do not link to the row above them`);
+
+const swatches = await rev.locator("table.dtable tbody tr span[style*='background']").count();
+swatches >= linked.length * 2
+  ? ok("every hash carries its colour swatch, so the links are readable at a glance")
+  : bad(`only ${swatches} swatches for ${linked.length} linked rows`);
 
 /* ============================================ 6  SIGN-OFF IS BLOCKED */
 step("6  reviewer: sign-off is refused while gating exceptions are open");
