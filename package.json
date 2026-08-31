@@ -25,7 +25,6 @@
     "build:setup": "esbuild scripts/setup.ts --bundle --platform=node --target=node22 --format=cjs --outfile=.next/standalone/setup.cjs --external:pg-native --external:cloudflare:sockets --log-level=warning"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.122.0",
     "bcryptjs": "^2.4.3",
     "clsx": "^2.1.1",
     "decimal.js": "^10.4.3",

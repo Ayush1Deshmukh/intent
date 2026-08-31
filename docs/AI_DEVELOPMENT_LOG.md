@@ -1,7 +1,7 @@
 # AI development log
 
-Verified Tape was built with an agentic coding assistant (Claude Code, Opus-class
-models) driving the keyboard for most of the source in this repository. This document
+Verified Tape was built with a terminal-based agentic coding assistant driving the
+keyboard for most of the source in this repository. This document
 records how that actually went: what the assistant was good at, what it got wrong, what
 was rejected and why, and what human judgement had to override.
 
@@ -17,10 +17,10 @@ from a transcript; the *outcomes* are all checkable against `git log`.
 
 ---
 
-## 1 · The standing brief: `AGENTS.md`
+## 1 · The standing brief: `ENGINEERING.md`
 
 The single highest-leverage artifact in this repository is not code. It is
-[`AGENTS.md`](../AGENTS.md), a one-page brief the assistant reads at the start of every
+[`ENGINEERING.md`](../ENGINEERING.md), a one-page brief the assistant reads at the start of every
 session. It contains five invariants stated as prohibitions:
 
 > 1. No code path writes to `loanRecords` except `approveProposal()`.
@@ -209,19 +209,22 @@ listed in rough order of how expensive they would have been to ship.
 
 ### 3.1 The AI client could never have reached a live model
 
-**What it wrote.** The Anthropic client sent `temperature: 0` on every request, pinned
-`claude-sonnet-4-5`, and capped `max_tokens` between 500 and 1400.
+**What it wrote.** The model client pinned a model id that had since been retired, sent
+a sampling parameter the current API rejects, and capped `max_tokens` between 500 and
+1400.
 
-**Why it is wrong.** All three are stale priors from an older API. Sampling parameters
-are rejected outright by current models — `temperature` returns a 400. `max_tokens` was
-sized for a world where reasoning was opt-in; it is now on by default and billed against
-the same ceiling, so even a request that got through would have truncated mid-object.
+**Why it is wrong.** All three are stale priors from an older version of the API the
+assistant had learned. A rejected parameter returns a 400 before the model ever runs.
+And the token ceilings were sized for a world where reasoning was opt-in; on current
+models it is on by default and billed against the same ceiling, so even a request that
+got through would have truncated mid-object.
 
 **Why it was expensive.** `callModel()` catches API errors and falls back deterministically
 — by design, and that design is correct. But it means this bug had *no symptom*. The app
 worked. The tests passed. The UI showed rule-based explanations with the correct "no
 model" provenance chip. The first time anyone would have discovered that the model was
-never reachable is when a judge asked "is this actually calling Claude?" during the demo.
+never reachable is when a reviewer asked "is this actually calling a model?" during the
+demo.
 
 **How it was caught.** Not by review — by refusing to accept "the AI layer is written" as
 equivalent to "the AI layer has run". Writing [`scripts/ai-check.ts`](../scripts/ai-check.ts),
@@ -237,10 +240,11 @@ proposal, the AI panel on `/docs`, and the live/fallback counter in `ai:check`.
 obvious that it was hard-wired to one vendor for no architectural reason. The AI here is
 advisory by construction: it emits a proposal, a human accepts, a second human approves.
 Nothing downstream depends on *which* model wrote the proposal — only on the Zod gate it
-has to pass. So the provider became `src/lib/ai/providers.ts`, and everything except
-Anthropic now goes through one OpenAI-shaped `fetch`. That took the project's last paid
-dependency to zero: Groq, Gemini, OpenRouter, Cerebras and a local Ollama all have free
-tiers, and the deterministic twin still answers when a free-tier key is rate-limited.
+has to pass. So the provider became `src/lib/ai/providers.ts`, and
+every provider now goes through one OpenAI-shaped `fetch`. That took the project's last
+paid dependency to zero: Groq, Gemini, OpenRouter, Cerebras and a local Ollama all have
+free tiers, and the deterministic twin still answers when a free-tier key is
+rate-limited.
 `tests/providers.test.ts` pins every branch of the resolution, because it is config logic
 that fails silently in exactly the way this section is about.
 
@@ -288,7 +292,7 @@ becomes noise — which destroys the product, because the entire value propositi
 
 **The fix.** Null propagates to false through every comparison; missing values are
 detected only by rules that say `isNull` explicitly. This is now semantics rule 1 in
-`AGENTS.md` and is asserted in `tests/rules.test.ts`.
+`ENGINEERING.md` and is asserted in `tests/rules.test.ts`.
 
 ### 3.4 Cascading exceptions from one bad input
 
@@ -415,7 +419,7 @@ way.
   described the sample rather than the tape. The model was not wrong; the task was wrong,
   and nothing in a well-formed answer tells you that.
 - **Holding a cross-cutting invariant without being reminded.** Every one of the five
-  invariants in `AGENTS.md` is there because it was violated at least once in code that
+  invariants in `ENGINEERING.md` is there because it was violated at least once in code that
   was locally reasonable. Locality is the model's blind spot, and a written brief is a
   cheaper fix than review.
 - **Its own tests.** §3.8. A generated test that passes is weak evidence; a generated test

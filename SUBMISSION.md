@@ -168,12 +168,12 @@ and works offline.
 **The provider is pluggable, and every supported one is free.** Because the AI only
 advises, which model answers is a configuration line: Groq, Google Gemini, OpenRouter,
 Cerebras and a local Ollama all work through one OpenAI-shaped transport
-(`src/lib/ai/providers.ts`), and none of them needs a credit card. Anthropic is supported
-and is the only paid option. **This project has no paid dependency** — hosting, database
-and model all sit on free tiers, so a judge can stand the whole thing up themselves.
+(`src/lib/ai/providers.ts`), and none of them needs a credit card. **This project has no
+paid dependency** — hosting, database and model all sit on free tiers, so a reviewer can
+stand the whole thing up themselves.
 
 **Agentic coding discipline:** [`docs/AI_DEVELOPMENT_LOG.md`](docs/AI_DEVELOPMENT_LOG.md).
-It covers the standing brief in [`AGENTS.md`](AGENTS.md) that encodes five invariants as
+It covers the standing brief in [`ENGINEERING.md`](ENGINEERING.md) that encodes five invariants as
 prohibitions, where the assistant was a genuine multiplier, the review apparatus that
 carried the load — and eight **rejected outputs** with the reasoning that overrode them —
 including one (`temperature: 0` against a model that rejects it) that would have made the

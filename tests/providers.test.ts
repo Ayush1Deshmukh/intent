@@ -64,15 +64,8 @@ describe("provider resolution", () => {
     expect(p?.model).toBe("m");
   });
 
-  it("still works for an instance configured before providers existed", () => {
-    // ANTHROPIC_API_KEY alone, no AI_PROVIDER — the shape this repo shipped with
-    const p = resolveProvider(env({
-      AI_ENABLED: "true", ANTHROPIC_API_KEY: "sk-ant-x", ANTHROPIC_MODEL: "claude-opus-5",
-    }));
-    expect(p?.id).toBe("anthropic");
-    expect(p?.kind).toBe("anthropic");
-    expect(p?.model).toBe("claude-opus-5");
-    expect(p?.apiKey).toBe("sk-ant-x");
+  it("is off when AI_PROVIDER names nothing, even with a key present", () => {
+    expect(resolveProvider(env({ AI_ENABLED: "true", AI_API_KEY: "k" }))).toBeNull();
   });
 
   it('"none" is an explicit off switch, not an unknown provider', () => {
@@ -91,9 +84,11 @@ describe("the provider catalogue", () => {
     }
   });
 
-  it("anthropic is the only entry that is not free, and is not offered as one", () => {
-    expect(FREE_PROVIDERS.map((p) => p.id)).not.toContain("anthropic");
-    expect(PROVIDERS.anthropic.free).toMatch(/paid/);
+  it("every provider in the catalogue is free — the project has no paid dependency", () => {
+    expect(FREE_PROVIDERS.length).toBe(Object.keys(PROVIDERS).length);
+    for (const p of Object.values(PROVIDERS)) {
+      expect(p.free.toLowerCase(), p.id).not.toMatch(/paid|no free tier/);
+    }
   });
 
   it("every base url is https, except the local one", () => {

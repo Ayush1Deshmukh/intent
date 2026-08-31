@@ -115,8 +115,7 @@ demonstrable with `AI_ENABLED=false`.
 Because the AI only advises, **the provider is configuration rather than architecture**.
 Groq, Google Gemini, OpenRouter, Cerebras and a local Ollama all work through one
 OpenAI-shaped transport, and every one of them has a free tier that needs no credit card —
-**this project has no paid dependency at all.** Anthropic is supported too, and is the
-only option that costs money.
+**this project has no paid dependency at all.**
 
 ```bash
 AI_ENABLED="true"  AI_PROVIDER="groq"  AI_API_KEY="..."   # ~30 seconds at console.groq.com/keys

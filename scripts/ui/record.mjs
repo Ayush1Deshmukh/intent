@@ -16,7 +16,7 @@
  * cache keeps the recording free of a nine-second wait that reads as a stall on video.
  */
 import { chromium } from "playwright";
-import { mkdir, readdir, rename, stat } from "node:fs/promises";
+import { mkdir, readdir, rename, stat, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 
 const BASE = process.env.BASE_URL || "http://localhost:3000";
@@ -24,7 +24,26 @@ const OUT = process.env.VIDEO_DIR || "artifacts/video";
 const PACE = Number(process.env.PACE ?? 1);
 await mkdir(OUT, { recursive: true });
 
-const beat = (n, s) => console.log(`  ${String(n).padStart(2)}  ${s}`);
+/**
+ * Beats are logged with the elapsed time at which they start, and written to a
+ * timings file beside the video.
+ *
+ * Without this the video is unusable for narration: Playwright's webm carries no
+ * duration metadata, so there is no way to know when beat 6 begins short of scrubbing
+ * for it. A voice-over needs timecodes, and they should come from the run that
+ * produced the footage rather than from reading the script and adding up sleeps.
+ */
+const started = Date.now();
+const marks = [];
+const clock = () => {
+  const s = (Date.now() - started) / 1000;
+  return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+};
+const beat = (n, label) => {
+  const at = clock();
+  marks.push({ n, at, seconds: Math.round((Date.now() - started) / 10) / 100, label });
+  console.log(`  ${at}  ${String(n).padStart(2)}  ${label}`);
+};
 /** Deliberate dwell time — the viewer has to read what the presenter is talking about. */
 const hold = (ms) => new Promise((r) => setTimeout(r, ms * PACE));
 
@@ -185,6 +204,15 @@ try {
   console.log("\n  restored the tampered record");
 } catch { /* nothing to restore */ }
 
+marks.push({ n: "end", at: clock(), seconds: Math.round((Date.now() - started) / 10) / 100, label: "recording ends" });
+await writeFile(`${OUT}/timings.json`, JSON.stringify({
+  recordedAt: new Date().toISOString(),
+  pace: PACE,
+  durationSeconds: marks[marks.length - 1].seconds,
+  beats: marks,
+}, null, 2) + "\n");
+console.log(`\n  total ${marks[marks.length - 1].at}`);
+
 // Playwright names the file after the page, so pick by write time and skip the target
 // itself — sorting by name silently selects a previous run's output.
 const OUTPUT = "verified-tape-demo.webm";
@@ -197,5 +225,6 @@ if (newest) {
   await rename(`${OUT}/${newest}`, `${OUT}/${OUTPUT}`);
   console.log(`\n  ${OUT}/${OUTPUT}`);
   console.log("  Narrate over it using DEMO.md, which is the same ten beats in the same order.");
+  console.log(`  ${OUT}/timings.json — beat timecodes, for narration`);
   console.log("  To convert:  ffmpeg -i verified-tape-demo.webm -c:v libx264 -crf 23 verified-tape-demo.mp4\n");
 }

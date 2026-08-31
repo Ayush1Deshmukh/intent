@@ -4,15 +4,16 @@
  * The AI layer is advisory by design (ADR 0002) — it emits proposals a human has to
  * accept and a second human has to approve — so the provider behind it is a
  * configuration choice, not an architectural one. That is deliberate: it means the
- * whole system runs on a free tier, and it means a judge can run it themselves
+ * whole system runs on a free tier, and it means a reviewer can run it themselves
  * without a paid account.
  *
- * Everything except Anthropic speaks the OpenAI chat-completions shape, so one HTTP
- * transport covers Groq, Google Gemini, OpenRouter, Cerebras, Together, and a local
- * Ollama or LM Studio. Nothing here is a special case in the calling code.
+ * Every provider here speaks the OpenAI chat-completions shape, so one HTTP transport
+ * covers Groq, Google Gemini, OpenRouter, Cerebras, Together, and a local Ollama or
+ * LM Studio. There are no vendor special cases in the calling code, and every option
+ * has a free tier — this project has no paid dependency.
  */
 
-export type ProviderKind = "openai" | "anthropic";
+export type ProviderKind = "openai";
 
 export type Provider = {
   id: string;
@@ -97,32 +98,18 @@ export const PROVIDERS: Record<string, Provider> = {
     jsonSchema: false,
     reasoningEffort: false,
   },
-  anthropic: {
-    id: "anthropic",
-    label: "Anthropic",
-    kind: "anthropic",
-    baseUrl: "https://api.anthropic.com",
-    defaultModel: "claude-opus-5",
-    free: "paid — no free tier",
-    keyUrl: "https://console.anthropic.com/settings/keys",
-    jsonSchema: true,
-    reasoningEffort: false,
-  },
 };
 
-export const FREE_PROVIDERS = Object.values(PROVIDERS).filter((p) => p.id !== "anthropic");
+/** Every provider is free; the name is kept because the docs and CLI read better for it. */
+export const FREE_PROVIDERS = Object.values(PROVIDERS);
 
 export type ResolvedProvider = Provider & { apiKey: string; model: string };
 
-/**
- * Read the environment once, and be explicit about the back-compatible case:
- * an instance configured before providers existed set ANTHROPIC_API_KEY and
- * nothing else, and it must keep working untouched.
- */
+/** Read the environment once, and resolve a usable provider or nothing at all. */
 export function resolveProvider(env: NodeJS.ProcessEnv = process.env): ResolvedProvider | null {
   if (env.AI_ENABLED !== "true") return null;
 
-  const id = (env.AI_PROVIDER || (env.ANTHROPIC_API_KEY ? "anthropic" : "")).trim().toLowerCase();
+  const id = (env.AI_PROVIDER ?? "").trim().toLowerCase();
   if (!id || id === "none") return null;
 
   const preset = PROVIDERS[id];
@@ -137,11 +124,11 @@ export function resolveProvider(env: NodeJS.ProcessEnv = process.env): ResolvedP
     };
   }
 
-  const apiKey = (env.AI_API_KEY || (preset.id === "anthropic" ? env.ANTHROPIC_API_KEY : "") || "").trim();
+  const apiKey = (env.AI_API_KEY ?? "").trim();
   // Ollama runs locally with no key at all; everything else needs one
   if (!apiKey && preset.id !== "ollama") return null;
 
-  const model = (env.AI_MODEL || (preset.id === "anthropic" ? env.ANTHROPIC_MODEL : "") || preset.defaultModel).trim();
+  const model = (env.AI_MODEL || preset.defaultModel).trim();
   const baseUrl = (env.AI_BASE_URL || preset.baseUrl).replace(/\/+$/, "");
 
   return { ...preset, baseUrl, apiKey, model };

@@ -3,17 +3,14 @@ import { z } from "zod";
 const Env = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   AUTH_SECRET: z.string().min(16, "AUTH_SECRET must be at least 16 characters"),
-  // Provider-agnostic. AI_PROVIDER is one of the ids in src/lib/ai/providers.ts —
-  // every one of them except "anthropic" has a free tier that needs no card.
+  // Provider-agnostic. AI_PROVIDER is one of the ids in src/lib/ai/providers.ts;
+  // every one of them has a free tier that needs no credit card.
   AI_ENABLED: z.enum(["true", "false"]).optional().default("false"),
   AI_PROVIDER: z.string().optional().default(""),
   AI_API_KEY: z.string().optional().default(""),
   AI_MODEL: z.string().optional().default(""),
   AI_BASE_URL: z.string().optional().default(""),
   AI_TIMEOUT_MS: z.coerce.number().int().positive().optional().default(45000),
-  // kept so an instance configured before providers existed still boots unchanged
-  ANTHROPIC_API_KEY: z.string().optional().default(""),
-  ANTHROPIC_MODEL: z.string().optional().default(""),
   DEMO_RESET_TOKEN: z.string().optional().default("demo-reset"),
   MAX_TAPE_ROWS: z.coerce.number().int().positive().optional().default(5000),
 });

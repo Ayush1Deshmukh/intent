@@ -27,16 +27,6 @@ async function main() {
   line(`\n${providerLabel()} · ${p.baseUrl}`);
   line(`current AI_MODEL: ${p.model}\n`);
 
-  if (p.kind === "anthropic") {
-    const res = await fetch("https://api.anthropic.com/v1/models?limit=100", {
-      headers: { "x-api-key": p.apiKey, "anthropic-version": "2023-06-01" },
-    });
-    if (!res.ok) { console.error(`${res.status}: ${(await res.text()).slice(0, 300)}`); process.exit(1); }
-    const json = await res.json() as { data?: { id: string; display_name?: string }[] };
-    for (const m of json.data ?? []) line(`  ${m.id.padEnd(34)} ${m.display_name ?? ""}`);
-    process.exit(0);
-  }
-
   const res = await fetch(`${p.baseUrl}/models`, {
     headers: p.apiKey ? { authorization: `Bearer ${p.apiKey}` } : {},
   });

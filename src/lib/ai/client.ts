@@ -18,34 +18,29 @@ type Effort = "low" | "medium" | "high" | "xhigh" | "max";
  * Per job: how much room the model gets, how hard it should think, and the JSON
  * schema the server should constrain it to.
  *
- * The two token budgets are not a style choice. On Anthropic models thinking is on
- * by default and is billed against the same ceiling, so the answer needs thousands
- * of tokens of headroom. On a free OpenAI-shaped tier the ceiling is the *constraint*:
- * Groq's free tier allows 8,000 tokens per minute counting prompt plus requested
- * completion, so asking for 8,000 is rejected outright with a 413 before the model
- * ever runs. These jobs emit a few hundred tokens of JSON; sizing for that is both
- * correct and what makes the free tier usable.
+ * The token budgets are a constraint, not a preference. A free tier meters tokens per
+ * minute counting prompt plus requested completion — Groq's allows 8,000 — so asking
+ * for 8,000 is rejected outright before the model ever runs. These jobs emit a few
+ * hundred tokens of JSON; sizing for that is both correct and what makes the free
+ * tier usable at all.
  *
  * `author` deliberately has no schema: its output carries a rule expression from an
  * open, recursive DSL, and pinning that into a JSON Schema would freeze the grammar
  * in two places.
  */
 type JobSpec = {
-  /** headroom for reasoning plus answer, on a model that always reasons */
-  anthropicTokens: number;
-  /** the answer, on a model that does not — sized to fit a free per-minute budget */
-  openaiTokens: number;
+  maxTokens: number;
   effort: Effort;
   schema?: Record<string, unknown>;
 };
 
 const JOB: Record<AiJob, JobSpec> = {
-  explain: { anthropicTokens: 4000, openaiTokens: 700, effort: "low", schema: EXPLAIN_JSON_SCHEMA },
-  propose: { anthropicTokens: 6000, openaiTokens: 900, effort: "medium", schema: PROPOSE_JSON_SCHEMA },
+  explain: { maxTokens: 700, effort: "low", schema: EXPLAIN_JSON_SCHEMA },
+  propose: { maxTokens: 900, effort: "medium", schema: PROPOSE_JSON_SCHEMA },
   // low effort, deliberately: this is classification, not reasoning, and at medium
   // the scratchpad ate the output budget and the server rejected an empty generation
-  cluster: { anthropicTokens: 12000, openaiTokens: 3500, effort: "low", schema: CLUSTER_JSON_SCHEMA },
-  author: { anthropicTokens: 8000, openaiTokens: 1200, effort: "medium" },
+  cluster: { maxTokens: 3500, effort: "low", schema: CLUSTER_JSON_SCHEMA },
+  author: { maxTokens: 1200, effort: "medium" },
 };
 
 /** low / medium / high is the whole vocabulary the OpenAI-shaped servers accept. */
@@ -117,12 +112,12 @@ class RateLimitError extends Error {
 /* ------------------------------------------------------------ OpenAI-shaped */
 
 /**
- * One transport for Groq, Gemini's compatibility endpoint, OpenRouter, Cerebras,
- * Together and a local Ollama. Plain fetch on purpose — adding a provider SDK per
- * vendor would buy nothing here and cost a dependency each.
+ * The only transport. Groq, Gemini's compatibility endpoint, OpenRouter, Cerebras,
+ * Together and a local Ollama all speak this shape. Plain fetch on purpose — a
+ * provider SDK per vendor would buy nothing here and cost a dependency each.
  *
- * Unlike the Anthropic models, these accept sampling parameters, so temperature 0
- * is both allowed and wanted.
+ * These accept sampling parameters, so temperature 0 is both allowed and wanted:
+ * determinism here comes from temperature, the response schema and the Zod gate.
  */
 async function callOpenAiShaped(p: ResolvedProvider, c: Call, useSchema: boolean): Promise<Raw> {
   const body: Record<string, unknown> = {
@@ -197,36 +192,6 @@ async function callOpenAiShaped(p: ResolvedProvider, c: Call, useSchema: boolean
   };
 }
 
-/* ---------------------------------------------------------------- Anthropic */
-
-async function callAnthropic(p: ResolvedProvider, c: Call, useSchema: boolean): Promise<Raw> {
-  const { default: Anthropic } = await import("@anthropic-ai/sdk");
-  const client = new Anthropic({ apiKey: p.apiKey, maxRetries: 1 });
-  try {
-    const msg = await client.messages.create({
-      model: p.model,
-      max_tokens: c.maxTokens,
-      system: c.system,
-      output_config: {
-        effort: c.effort,
-        ...(useSchema && c.schema ? { format: { type: "json_schema" as const, schema: c.schema } } : {}),
-      },
-      messages: [{ role: "user", content: c.user }],
-    });
-    // A safety refusal is a 200, not a throw.
-    if (msg.stop_reason === "refusal") return { text: "", tokensIn: 0, tokensOut: 0, refused: true };
-    return {
-      text: msg.content.filter((b) => b.type === "text").map((b) => b.text).join("\n"),
-      tokensIn: msg.usage.input_tokens,
-      tokensOut: msg.usage.output_tokens,
-    };
-  } catch (err) {
-    if (err instanceof Anthropic.AuthenticationError) throw new AuthError(err.message);
-    if (err instanceof Anthropic.BadRequestError && useSchema) throw new BadSchemaError(err.message);
-    throw err;
-  }
-}
-
 /* --------------------------------------------------------------------- call */
 
 /**
@@ -239,9 +204,8 @@ async function callAnthropic(p: ResolvedProvider, c: Call, useSchema: boolean): 
  *   5 log model, prompt hash, tokens and latency onto the caller's row
  *   6 hand back a clean failure so the caller can fall back deterministically
  *
- * Note what is NOT sent to Anthropic models: `temperature`. Current ones reject
- * sampling parameters outright, and a silent 400 would surface as "the AI is down"
- * in the middle of a demo. Determinism comes from the schema and the Zod gate.
+ * Determinism comes from temperature 0, the response schema, and the Zod gate — never
+ * from trusting the model to be consistent on its own.
  */
 export async function callModel<T>(
   job: AiJob, system: string, user: string, schema: z.ZodType<T>,
@@ -267,17 +231,15 @@ export async function callModel<T>(
     return { ok: false, reason: "no model provider is configured on this instance", promptHash, promptText };
   }
 
-  const maxTokens = p.kind === "anthropic" ? cfg.anthropicTokens : cfg.openaiTokens;
-  const call: Call = { system, user, maxTokens, effort: cfg.effort, schema: cfg.schema, jobName: job };
+  const call: Call = { system, user, maxTokens: cfg.maxTokens, effort: cfg.effort, schema: cfg.schema, jobName: job };
   let useSchema = cfg.schema !== undefined;
   let lastError = "";
 
   for (let attempt = 0; attempt < 2; attempt++) {
     const started = Date.now();
     try {
-      const raw = p.kind === "anthropic"
-        ? await callAnthropic(p, { ...call, user: attempt === 0 ? user : retryUser(user, lastError) }, useSchema)
-        : await callOpenAiShaped(p, { ...call, user: attempt === 0 ? user : retryUser(user, lastError) }, useSchema);
+      const raw = await callOpenAiShaped(
+        p, { ...call, user: attempt === 0 ? user : retryUser(user, lastError) }, useSchema);
 
       if (raw.refused) {
         debug(job, "the model declined this request");
