@@ -10,7 +10,7 @@ on trust, which is the same principle the product is built on.
 | Start here | |
 |---|---|
 | Run it | [`README.md`](README.md) — five commands to a working instance |
-| Watch it | [`DEMO.md`](DEMO.md) — the five-minute walkthrough, beat by beat |
+| Watch it | [`DEMO.md`](DEMO.md) — the walkthrough, beat by beat, with [`docs/NARRATION.md`](docs/NARRATION.md) as the timed script |
 | How it was built | [`docs/AI_DEVELOPMENT_LOG.md`](docs/AI_DEVELOPMENT_LOG.md) — agentic coding, including what was rejected |
 | The architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — two pages: design, data model, engine, AI, audit, trade-offs |
 | Why it is shaped this way | [`docs/adr/`](docs/adr/) — seven decisions, each with the alternatives that lost |

@@ -4,6 +4,13 @@ Five minutes, ten beats, three people. Every beat below is asserted by
 `npm run ui:demo`, which drives this exact sequence through a real browser and fails if
 any of it stops working — so the script and the rehearsal cannot drift apart.
 
+## Narrating it
+
+[`docs/NARRATION.md`](docs/NARRATION.md) is a word-for-word script keyed to the recording's
+real timecodes, with pause markers and a measured words-per-minute budget per beat. Read it
+aloud over the video, or feed it to a text-to-speech tool — the pause markers map directly
+to SSML breaks.
+
 ## Recording it
 
 ```bash
