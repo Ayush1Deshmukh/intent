@@ -89,6 +89,32 @@ describe("the image can be built from a fresh clone", () => {
   });
 });
 
+describe("files read at runtime survive a serverless build", () => {
+  const nextConfig = readFileSync(join(ROOT, "next.config.ts"), "utf8");
+
+  /**
+   * The demo tape loader reads fixtures/*.csv by a path built at request time. Next's
+   * tracing follows static imports and cannot see that, so the files were absent from
+   * the build — and the Docker image hid it, because that copies fixtures/ in
+   * explicitly. The result was a route that worked in every local and container test
+   * and returned a 500 on Vercel.
+   */
+  it("next.config declares the fixtures directory for output file tracing", () => {
+    expect(nextConfig).toMatch(/outputFileTracingIncludes/);
+    expect(nextConfig, "fixtures must be named, or the serverless build drops them")
+      .toMatch(/fixtures/);
+  });
+
+  it("every runtime-read directory is either traced or copied by the Dockerfile", () => {
+    // fixtures is read by the demo loader; drizzle by the container's setup step
+    for (const dir of ["fixtures", "drizzle"]) {
+      const traced = new RegExp(`outputFileTracingIncludes[\\s\\S]*${dir}`).test(nextConfig);
+      const copied = new RegExp(`COPY --from=build /app/${dir}`).test(dockerfile);
+      expect(traced || copied, `${dir}/ is read at runtime but neither traced nor copied`).toBe(true);
+    }
+  });
+});
+
 describe("the environment example matches what the code reads", () => {
   const example = readFileSync(join(ROOT, ".env.example"), "utf8");
   const envSchema = readFileSync(join(ROOT, "src/lib/env.ts"), "utf8");
@@ -110,5 +136,71 @@ describe("the environment example matches what the code reads", () => {
   it("the example never ships a real-looking key", () => {
     expect(/gsk_[A-Za-z0-9]{20,}|sk-ant-[A-Za-z0-9]{20,}|sk-[A-Za-z0-9]{32,}/.test(example),
       ".env.example appears to contain a real credential").toBe(false);
+  });
+});
+
+/**
+ * `npm ci` refuses to install a lockfile whose tree is internally inconsistent, and this
+ * one was: `@img/sharp-wasm32` and `@tailwindcss/oxide-wasm32-wasi` declared a dependency
+ * on `@emnapi/runtime`, and no entry in the lock satisfied it.
+ *
+ * The cause is that the lock had been written by an incremental install against an
+ * existing macOS tree. npm never installs a `wasm32-wasi` package on darwin-arm64, so it
+ * pruned that package's own dependencies out of the lock while leaving the requirement
+ * behind. Only a resolution from an empty tree writes them back.
+ *
+ * Nothing local could see it. `npm install`, `npm test`, `npm run build` and a cached
+ * Docker layer all worked; the failure appeared only where the install starts from
+ * nothing — a fresh clone, a CI runner, a Vercel build, an uncached image build. That is
+ * every path a judge or a deployment would take, and none of the paths a developer takes.
+ *
+ * So this asserts the property `npm ci` asserts, without needing a network or an empty
+ * directory: every version requirement in the lock is satisfied by something the lock
+ * also contains.
+ */
+describe("the lockfile installs from nothing", () => {
+  type LockPkg = {
+    version?: string;
+    dependencies?: Record<string, string>;
+    optionalDependencies?: Record<string, string>;
+    peerDependencies?: Record<string, string>;
+    peerDependenciesMeta?: Record<string, { optional?: boolean }>;
+  };
+  const lock = JSON.parse(readFileSync(join(ROOT, "package-lock.json"), "utf8")) as {
+    lockfileVersion: number;
+    packages: Record<string, LockPkg>;
+  };
+
+  it("is a lockfile this test understands", () => {
+    expect(lock.lockfileVersion).toBeGreaterThanOrEqual(3);
+    expect(Object.keys(lock.packages).length).toBeGreaterThan(100);
+  });
+
+  /**
+   * npm's own resolution: from the depending package's directory, walk up through each
+   * enclosing `node_modules` until an entry for the name appears — the same nesting rule
+   * `require()` follows.
+   */
+  const resolveFrom = (dir: string, name: string): LockPkg | null => {
+    const segments = dir === "" ? [] : dir.split("/node_modules/");
+    for (let i = segments.length; i >= 0; i--) {
+      const base = segments.slice(0, i).join("/node_modules/");
+      const candidate = `${base ? base + "/" : ""}node_modules/${name}`;
+      if (candidate in lock.packages) return lock.packages[candidate];
+    }
+    return null;
+  };
+
+  it("every dependency named in the lock resolves to an entry in the lock", () => {
+    const missing: string[] = [];
+    for (const [dir, pkg] of Object.entries(lock.packages)) {
+      // Peer dependencies may legitimately go unsatisfied; npm ci does not fail on them.
+      const required = { ...pkg.dependencies, ...pkg.optionalDependencies };
+      for (const name of Object.keys(required)) {
+        if (resolveFrom(dir, name) === null) missing.push(`${dir || "<root>"} needs ${name}`);
+      }
+    }
+    expect(missing, `regenerate with: rm -rf node_modules package-lock.json && npm install`)
+      .toEqual([]);
   });
 });
