@@ -104,3 +104,27 @@ export function Subject({ loanId, rowNumber, className = "" }: {
 
 export const subjectLabel = (loanId: string | null, rowNumber: number | null) =>
   loanId || (rowNumber != null ? `row ${rowNumber} · no id` : "tape-level");
+
+/**
+ * A timestamp that reads the same on the server and in the browser.
+ *
+ * `new Date(x).toLocaleString()` with no arguments asks the runtime for its own locale
+ * and time zone. In a server component those are the container's, and the browser then
+ * re-renders with the viewer's — so React finds two different strings for the same node
+ * and reports a hydration mismatch (#418) into the console. It was a real console error
+ * on the reviewer queue and the verification history, which are two of the pages a judge
+ * is most likely to have open with devtools.
+ *
+ * Numbers in this codebase already pin their locale (`toLocaleString("en-US")`); dates
+ * simply had not. This pins the zone as well, and says which zone it is, because an
+ * audit timestamp that silently shifts with the reader is worse than one that does not
+ * match their wall clock.
+ */
+export function Stamp({ at }: { at: Date | string | number }) {
+  const d = new Date(at);
+  const s = d.toLocaleString("en-US", {
+    timeZone: "UTC", year: "numeric", month: "short", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  });
+  return <time dateTime={d.toISOString()} title={d.toISOString()}>{s} UTC</time>;
+}

@@ -27,11 +27,20 @@ const note = (m) => console.log("        " + m);
 const b = await chromium.launch(EXE ? { executablePath: EXE } : {});
 const shot = (p, n) => p.screenshot({ path: `${SHOTS}/${n}.png`, fullPage: true });
 const errs = [];
+const expected = [];   // non-2xx responses the demo deliberately provokes
 
 async function login(email) {
   const ctx = await b.newContext({ viewport: { width: 1500, height: 1100 } });
   const p = await ctx.newPage();
-  p.on("console", (m) => { if (m.type() === "error") errs.push(email + ": " + m.text()); });
+  // The tamper beat makes /api/v1/verify return 409, which is the designed answer for
+  // "this tape no longer verifies" — the browser logs every non-2xx fetch as a failed
+  // resource, so counting it as a console error buries any real one underneath it.
+  const EXPECTED = /Failed to load resource.*409/i;
+  p.on("console", (m) => {
+    if (m.type() !== "error") return;
+    if (EXPECTED.test(m.text())) { expected.push(email + ": " + m.text()); return; }
+    errs.push(email + ": " + m.text());
+  });
   p.on("pageerror", (e) => errs.push(email + ": " + String(e)));
   await p.goto(BASE + "/login", { waitUntil: "networkidle" });
   await p.locator(`form:has(input[value="${email}"]) button`).click();
@@ -390,7 +399,8 @@ const back = await rev.locator("body").innerText();
 
 await pgc.end();
 await b.close();
-console.log("\nCONSOLE ERRORS: " + errs.length);
+console.log("\nCONSOLE ERRORS: " + errs.length
+  + (expected.length ? `  (plus ${expected.length} expected 409 from the tamper beat)` : ""));
 [...new Set(errs)].slice(0, 10).forEach((e) => console.log("   ! " + e.slice(0, 200)));
 console.log(fails.length ? `\n${fails.length} FAILURE(S)\n` + fails.map((f) => "  - " + f).join("\n") : "\nDEMO REHEARSAL PASSED — every beat works on camera, and the database is back where it started");
 process.exit(fails.length ? 1 : 0);

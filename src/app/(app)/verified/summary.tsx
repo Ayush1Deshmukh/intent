@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Stat } from "@/components/ui";
+import { Stat, Stamp } from "@/components/ui";
 
 /**
  * What a Data Consumer opens this page to find out: how much of the portfolio is
@@ -58,7 +58,7 @@ export default function VerifiedSummary({ quality, sealed, attestations, excepti
                 <tr key={h.tapeId}>
                   <td className="text-xs"><Link href={`/tapes/${h.tapeId}`}>{h.tapeName}</Link></td>
                   <td className="text-xs text-muted">{h.signer}</td>
-                  <td className="text-xs text-muted">{new Date(h.at).toLocaleString()}</td>
+                  <td className="text-xs text-muted"><Stamp at={h.at} /></td>
                   <td className="tnum mono text-xs text-right">{h.records}</td>
                   <td className="mono text-[0.62rem] text-muted" title={h.root}>{h.root.slice(0, 20)}…</td>
                   <td>

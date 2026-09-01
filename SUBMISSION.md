@@ -235,7 +235,7 @@ Named here because scope discipline is a decision, not an omission.
 
 ```bash
 npm run lint          # clean
-npm run test          # 140 unit tests
+npm run test          # 156 unit tests
 npm run dry-run       # parse the fixtures, print the defect breakdown, check the canary
 npm run e2e           # the whole pipeline against a real database, no mocks, plus tampers
 npm run ui:demo       # the five-minute demo through a real browser, all three roles

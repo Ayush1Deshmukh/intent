@@ -2,7 +2,7 @@ import { desc, eq, inArray } from "drizzle-orm";
 
 import { db, proposals, exceptions, rules, loanRecords, rawRecords, users, tapes, decisions } from "@/lib/db";
 import { requireRolePage } from "@/lib/auth";
-import { Empty } from "@/components/ui";
+import { Empty, Stamp } from "@/components/ui";
 import ReviewList from "./list";
 
 export const dynamic = "force-dynamic";
@@ -101,7 +101,7 @@ export default async function ReviewPage() {
                   </td>
                   <td className="text-xs text-muted">{r.actor ?? "—"}</td>
                   <td className="text-xs text-ink2 max-w-[260px]">{r.d.reason || <span className="text-muted">—</span>}</td>
-                  <td className="text-xs text-muted whitespace-nowrap">{new Date(r.d.createdAt).toLocaleString()}</td>
+                  <td className="text-xs text-muted whitespace-nowrap"><Stamp at={r.d.createdAt} /></td>
                 </tr>
               ))}
             </tbody>
